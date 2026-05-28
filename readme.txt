@@ -4,7 +4,7 @@ Tags: seo, divi, rank math, metadata, open graph
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.2
+Stable tag: 1.0.3
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -21,6 +21,7 @@ Lite includes:
 * Rank Math-compatible metadata saves.
 * Admin list SEO completion column.
 * Divi Visual Builder/front-end overlay for editing the current page without leaving the builder.
+* GitHub-powered update checks that appear in the WordPress Dashboard, Updates screen, and Installed Plugins screen.
 
 The Lite version does not include Pro licensing, private updates, bulk SEO tools, schema templates, advanced social previews, import/export, white-labeling, or agency features.
 
@@ -52,6 +53,12 @@ Yes. The settings screen includes a Pro upgrade link.
 3. Lite settings and Pro upgrade screen.
 
 == Changelog ==
+
+= 1.0.3 =
+* Added GitHub release update checks for public Lite builds.
+* Integrated GitHub releases with the native WordPress plugin update system.
+* Added dashboard/admin update notices when a newer GitHub release is available.
+* Added release asset support for update packages named `seo-control-bridge-for-divi-lite.zip`.
 
 = 1.0.2 =
 * Rebuilt the front-end/Divi launcher as an iframe-local Visual Builder overlay.

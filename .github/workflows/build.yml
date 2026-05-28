@@ -8,7 +8,7 @@ on:
     branches: [ main ]
 
 permissions:
-  contents: read
+  contents: write
 
 jobs:
   build:
@@ -30,6 +30,7 @@ jobs:
       - name: Build ZIP
         run: |
           cd ..
+          rm -rf build
           mkdir -p build/${PLUGIN_SLUG}
           rsync -a --exclude='.git' --exclude='.github' --exclude='*.zip' ${GITHUB_REPOSITORY##*/}/ build/${PLUGIN_SLUG}/
           cd build
@@ -40,3 +41,21 @@ jobs:
         with:
           name: seo-control-bridge-for-divi-lite
           path: ../build/seo-control-bridge-for-divi-lite.zip
+
+      - name: Publish GitHub release asset
+        if: startsWith(github.ref, 'refs/tags/v')
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          VERSION="${GITHUB_REF_NAME#v}"
+          NOTES_FILE="/tmp/scbd-lite-release-notes.md"
+          cat > "$NOTES_FILE" <<EOF
+          ## SEO Control Bridge for Divi Lite ${VERSION}
+
+          Public Lite release build for WordPress update delivery from GitHub.
+
+          Installable plugin package:
+          - seo-control-bridge-for-divi-lite.zip
+          EOF
+          gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "SEO Control Bridge for Divi Lite ${VERSION}" --notes-file "$NOTES_FILE"
+          gh release upload "$GITHUB_REF_NAME" ../build/seo-control-bridge-for-divi-lite.zip --clobber

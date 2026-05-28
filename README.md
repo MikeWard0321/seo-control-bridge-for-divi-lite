@@ -43,3 +43,16 @@ This public Lite release is dependency-free and can be zipped directly.
 ## License
 
 GPLv2 or later.
+
+
+## GitHub Updates
+
+Lite checks the public GitHub Releases API for newer tagged releases. When a release newer than the installed version is available, WordPress shows the update in Dashboard > Updates and Plugins > Installed Plugins.
+
+For best results, each GitHub release should include this asset:
+
+```text
+seo-control-bridge-for-divi-lite.zip
+```
+
+The included GitHub Actions workflow builds that ZIP and attaches it to tagged GitHub releases.
