@@ -12,6 +12,8 @@ SEO Control Bridge for Divi Lite gives site owners a lightweight way to edit Ran
 - Page/post SEO completion column.
 - Visual Builder/front-end overlay for logged-in editors.
 - Pro upgrade link to EECONS.
+- Getting Started and View Details links from the Installed Plugins screen.
+- First-run Getting Started screen after activation.
 
 ## Pro features not included
 
@@ -31,6 +33,15 @@ SEO Control Bridge for Divi Lite gives site owners a lightweight way to edit Ran
 - Rank Math recommended but not strictly required
 - Divi recommended but not strictly required
 
+## Getting Started
+
+1. Install and activate the plugin ZIP.
+2. Open the automatic Getting Started screen, or use Settings > SEO Bridge Lite.
+3. Confirm Rank Math is active if you want Rank Math to output the saved metadata.
+4. Edit a page or post and complete the SEO Bridge Lite meta box.
+5. In Divi Visual Builder, use the draggable SEO Bridge Lite button to open the overlay without leaving the builder.
+6. Check the SEO completion column on Posts or Pages for a quick 0/3 to 3/3 metadata status.
+
 ## Development
 
 ```bash
@@ -44,6 +55,12 @@ This public Lite release is dependency-free and can be zipped directly.
 
 GPLv2 or later.
 
+
+## Release 1.0.4
+
+- Adds Getting Started and View Details links to the Installed Plugins screen.
+- Adds first-run Getting Started redirect after plugin activation.
+- Expands plugin information modal content for GitHub-distributed installs.
 
 ## GitHub Updates
 

@@ -4,7 +4,7 @@ Tags: seo, divi, rank math, metadata, open graph
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.3
+Stable tag: 1.0.4
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -22,6 +22,8 @@ Lite includes:
 * Admin list SEO completion column.
 * Divi Visual Builder/front-end overlay for editing the current page without leaving the builder.
 * GitHub-powered update checks that appear in the WordPress Dashboard, Updates screen, and Installed Plugins screen.
+* Getting Started and View Details links from the Installed Plugins screen.
+* First-run Getting Started page after activation.
 
 The Lite version does not include Pro licensing, private updates, bulk SEO tools, schema templates, advanced social previews, import/export, white-labeling, or agency features.
 
@@ -29,8 +31,22 @@ The Lite version does not include Pro licensing, private updates, bulk SEO tools
 
 1. Upload the plugin folder to `/wp-content/plugins/` or install the ZIP from Plugins > Add New.
 2. Activate SEO Control Bridge for Divi Lite.
-3. Open any page or post and use the SEO Bridge Lite panel, or open the Divi Visual Builder and click SEO Bridge Lite to edit metadata in the overlay.
-4. Rank Math is recommended for full SEO output handling.
+3. Use the Getting Started link on the Plugins screen, or open Settings > SEO Bridge Lite.
+4. Open any page or post and use the SEO Bridge Lite panel.
+5. Open the Divi Visual Builder and click the draggable SEO Bridge Lite button to edit metadata in the overlay.
+6. Rank Math is recommended for full SEO output handling.
+
+== Getting Started ==
+
+After activation, SEO Bridge Lite opens its Getting Started screen. You can return to it later from Settings > SEO Bridge Lite or from the Getting Started link on the Installed Plugins screen.
+
+Recommended first steps:
+
+1. Confirm Rank Math is installed and active.
+2. Edit a page or post and complete the SEO title, meta description, and focus keyword fields.
+3. Open the same page in the Divi Visual Builder and test the floating SEO Bridge Lite overlay.
+4. Drag the floating launcher to your preferred location. The position is remembered for that page.
+5. Review the SEO completion column on the Pages or Posts list.
 
 == Frequently Asked Questions ==
 
@@ -53,6 +69,12 @@ Yes. The settings screen includes a Pro upgrade link.
 3. Lite settings and Pro upgrade screen.
 
 == Changelog ==
+
+= 1.0.4 =
+* Added Getting Started link on the Installed Plugins screen.
+* Added View Details link on the Installed Plugins screen with plugin information modal support.
+* Added first-run redirect to the Getting Started page after activation.
+* Expanded Getting Started instructions in the admin screen and plugin details modal.
 
 = 1.0.3 =
 * Added GitHub release update checks for public Lite builds.

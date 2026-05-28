@@ -12,3 +12,18 @@
 .scbd-lite-pill-1, .scbd-lite-pill-2 { background: #fff3cd; color: #7a4d00; }
 .scbd-lite-pill-3 { background: #d1e7dd; color: #0f5132; }
 @media (max-width: 782px) { .scbd-lite-meta-box { grid-template-columns: 1fr; } }
+.scbd-lite-lede { font-size: 15px; max-width: 760px; color: #50575e; }
+.scbd-lite-hero-card { display: flex; align-items: center; justify-content: space-between; gap: 20px; border-left: 4px solid #2271b1; }
+.scbd-lite-hero-card h2 { margin-top: 0; }
+.scbd-lite-hero-card p { max-width: 680px; }
+.scbd-lite-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+.scbd-lite-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.scbd-lite-grid .scbd-lite-card { margin: 0; }
+.scbd-lite-checklist { margin-left: 0; }
+.scbd-lite-checklist li { margin: 8px 0; padding-left: 26px; position: relative; }
+.scbd-lite-checklist li::before { content: "✓"; position: absolute; left: 0; top: 0; color: #0f5132; font-weight: 800; }
+@media (max-width: 900px) {
+  .scbd-lite-hero-card { display: block; }
+  .scbd-lite-hero-actions { justify-content: flex-start; }
+  .scbd-lite-grid { grid-template-columns: 1fr; }
+}

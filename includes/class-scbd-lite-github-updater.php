@@ -61,29 +61,36 @@ final class GitHub_Updater {
             return $result;
         }
 
-        $release = $this->get_latest_release(false);
-        if (!$release) {
-            return $result;
-        }
+        $release = $this->get_latest_release(false) ?: [];
+        $version = (string) ($release['version'] ?? SCBD_LITE_VERSION);
+        $body = (string) ($release['body'] ?? '');
+        $package = (string) ($release['package'] ?? 'https://github.com/' . self::OWNER . '/' . self::REPO . '/releases/latest');
+        $html_url = (string) ($release['html_url'] ?? 'https://github.com/' . self::OWNER . '/' . self::REPO);
+        $published_at = (string) ($release['published_at'] ?? '');
 
         return (object) [
             'name' => 'SEO Control Bridge for Divi Lite',
             'slug' => self::REPO,
-            'version' => $release['version'],
+            'version' => $version,
             'author' => '<a href="https://eecons.com">Electronic Enterprises, Inc.</a>',
             'author_profile' => 'https://eecons.com',
             'homepage' => 'https://github.com/' . self::OWNER . '/' . self::REPO,
-            'requires' => $release['requires'],
-            'tested' => $release['tested'],
-            'requires_php' => $release['requires_php'],
-            'last_updated' => $release['published_at'],
-            'download_link' => $release['package'],
+            'requires' => (string) ($release['requires'] ?? '6.4'),
+            'tested' => (string) ($release['tested'] ?? '7.0'),
+            'requires_php' => (string) ($release['requires_php'] ?? '8.0'),
+            'last_updated' => $published_at,
+            'download_link' => $package,
             'banners' => $this->banners(),
             'icons' => $this->icons(),
+            'short_description' => 'Free SEO workflow bridge for Divi and Rank Math.',
             'sections' => [
-                'description' => wp_kses_post($this->markdown_to_basic_html($release['body'] ?: 'Public Lite release for SEO Control Bridge for Divi.')),
-                'changelog' => wp_kses_post($this->markdown_to_basic_html($release['body'] ?: 'See the GitHub release notes for details.')),
+                'description' => $this->plugin_description_html(),
+                'installation' => $this->plugin_installation_html(),
+                'faq' => $this->plugin_faq_html(),
+                'changelog' => wp_kses_post($this->markdown_to_basic_html($body ?: $this->local_changelog_markdown())),
             ],
+            'external' => false,
+            'donate_link' => 'https://eecons.com/product/seo-control-bridge-for-divi/',
         ];
     }
 
@@ -221,6 +228,49 @@ final class GitHub_Updater {
             'low' => SCBD_LITE_URL . 'assets/brand/scbd-lite-social.svg',
             'high' => SCBD_LITE_URL . 'assets/brand/scbd-lite-social.svg',
         ];
+    }
+
+    private function plugin_description_html(): string {
+        $html = '<p>' . esc_html__('SEO Control Bridge for Divi Lite gives WordPress site owners a lightweight way to edit Rank Math-compatible SEO metadata from a clean WordPress and Divi workflow.', 'seo-control-bridge-for-divi-lite') . '</p>';
+        $html .= '<h2>' . esc_html__('Getting Started', 'seo-control-bridge-for-divi-lite') . '</h2>';
+        $html .= '<ol>';
+        $html .= '<li>' . esc_html__('Install and activate the plugin.', 'seo-control-bridge-for-divi-lite') . '</li>';
+        $html .= '<li>' . esc_html__('Open Settings > SEO Bridge Lite for the Getting Started screen.', 'seo-control-bridge-for-divi-lite') . '</li>';
+        $html .= '<li>' . esc_html__('Open a page or post and fill in the SEO Bridge Lite meta box.', 'seo-control-bridge-for-divi-lite') . '</li>';
+        $html .= '<li>' . esc_html__('In the Divi Visual Builder, click the draggable SEO Bridge Lite button to edit metadata without leaving the builder.', 'seo-control-bridge-for-divi-lite') . '</li>';
+        $html .= '</ol>';
+        $html .= '<h2>' . esc_html__('Lite Includes', 'seo-control-bridge-for-divi-lite') . '</h2>';
+        $html .= '<ul>';
+        $html .= '<li>' . esc_html__('SEO title, meta description, focus keyword, and canonical URL fields.', 'seo-control-bridge-for-divi-lite') . '</li>';
+        $html .= '<li>' . esc_html__('OpenGraph and X/Twitter metadata fields.', 'seo-control-bridge-for-divi-lite') . '</li>';
+        $html .= '<li>' . esc_html__('Divi Visual Builder overlay with draggable, remembered launcher position.', 'seo-control-bridge-for-divi-lite') . '</li>';
+        $html .= '<li>' . esc_html__('GitHub-powered updates through the native WordPress updater.', 'seo-control-bridge-for-divi-lite') . '</li>';
+        $html .= '</ul>';
+        return $html;
+    }
+
+    private function plugin_installation_html(): string {
+        $html = '<ol>';
+        $html .= '<li>' . esc_html__('Upload the installable plugin ZIP from Plugins > Add New > Upload Plugin, or copy the plugin folder to wp-content/plugins.', 'seo-control-bridge-for-divi-lite') . '</li>';
+        $html .= '<li>' . esc_html__('Activate SEO Control Bridge for Divi Lite.', 'seo-control-bridge-for-divi-lite') . '</li>';
+        $html .= '<li>' . esc_html__('Open the Getting Started link from the Plugins screen or Settings > SEO Bridge Lite.', 'seo-control-bridge-for-divi-lite') . '</li>';
+        $html .= '<li>' . esc_html__('Open a page, post, or Divi Visual Builder page and begin editing SEO metadata.', 'seo-control-bridge-for-divi-lite') . '</li>';
+        $html .= '</ol>';
+        return $html;
+    }
+
+    private function plugin_faq_html(): string {
+        $html = '<h3>' . esc_html__('Does this replace Rank Math?', 'seo-control-bridge-for-divi-lite') . '</h3>';
+        $html .= '<p>' . esc_html__('No. It is a workflow bridge that saves Rank Math-compatible metadata. Rank Math should remain installed and active for complete SEO output.', 'seo-control-bridge-for-divi-lite') . '</p>';
+        $html .= '<h3>' . esc_html__('Does Lite include Pro license activation?', 'seo-control-bridge-for-divi-lite') . '</h3>';
+        $html .= '<p>' . esc_html__('No. Lite is public and does not contain EECONS License Manager code, private updater code, license endpoints, or protected download logic.', 'seo-control-bridge-for-divi-lite') . '</p>';
+        $html .= '<h3>' . esc_html__('How do updates work?', 'seo-control-bridge-for-divi-lite') . '</h3>';
+        $html .= '<p>' . esc_html__('The plugin checks the public GitHub Releases feed and exposes newer tagged releases to the native WordPress update system.', 'seo-control-bridge-for-divi-lite') . '</p>';
+        return $html;
+    }
+
+    private function local_changelog_markdown(): string {
+        return "## 1.0.4\n- Added Getting Started links on the Plugins screen.\n- Added View Details modal support for the Installed Plugins screen.\n- Added first-run redirect to the Getting Started page after activation.\n- Expanded plugin details content for GitHub-distributed installs.\n\n## 1.0.3\n- Added GitHub release update checks for public Lite builds.";
     }
 
     private function markdown_to_basic_html(string $markdown): string {
