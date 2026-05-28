@@ -1,0 +1,42 @@
+name: Build Lite Plugin ZIP
+
+on:
+  push:
+    branches: [ main ]
+    tags: [ 'v*' ]
+  pull_request:
+    branches: [ main ]
+
+permissions:
+  contents: read
+
+jobs:
+  build:
+    runs-on: ubuntu-latest
+    env:
+      PLUGIN_SLUG: seo-control-bridge-for-divi-lite
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@v5
+
+      - name: Validate plugin header version
+        run: |
+          VERSION=$(grep -E '^ \* Version:' seo-control-bridge-for-divi-lite.php | awk '{print $3}')
+          STABLE=$(grep -E '^Stable tag:' readme.txt | awk '{print $3}')
+          test -n "$VERSION"
+          test "$VERSION" = "$STABLE"
+          echo "Version $VERSION validated"
+
+      - name: Build ZIP
+        run: |
+          cd ..
+          mkdir -p build/${PLUGIN_SLUG}
+          rsync -a --exclude='.git' --exclude='.github' --exclude='*.zip' ${GITHUB_REPOSITORY##*/}/ build/${PLUGIN_SLUG}/
+          cd build
+          zip -r ${PLUGIN_SLUG}.zip ${PLUGIN_SLUG}
+
+      - name: Upload artifact
+        uses: actions/upload-artifact@v4
+        with:
+          name: seo-control-bridge-for-divi-lite
+          path: ../build/seo-control-bridge-for-divi-lite.zip

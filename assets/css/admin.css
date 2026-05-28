@@ -1,0 +1,14 @@
+.scbd-lite-wrap { max-width: 1040px; }
+.scbd-lite-card { background: #fff; border: 1px solid #dcdcde; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.04); margin: 18px 0; padding: 20px 24px; }
+.scbd-lite-pro-card { border-left: 4px solid #2271b1; }
+.scbd-lite-meta-box { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
+.scbd-lite-meta-box .description { grid-column: 1 / -1; margin: 0 0 4px; }
+.scbd-lite-field { margin: 0; }
+.scbd-lite-field label { display: block; margin-bottom: 6px; }
+.scbd-lite-field input, .scbd-lite-field textarea { box-sizing: border-box; width: 100%; max-width: 100%; border-radius: 10px; }
+.scbd-lite-field-description, .scbd-lite-field-facebook_description, .scbd-lite-field-twitter_description { grid-column: 1 / -1; }
+.scbd-lite-pill { display: inline-block; min-width: 38px; text-align: center; border-radius: 999px; padding: 3px 8px; font-weight: 700; }
+.scbd-lite-pill-0 { background: #f6d7d7; color: #8a2424; }
+.scbd-lite-pill-1, .scbd-lite-pill-2 { background: #fff3cd; color: #7a4d00; }
+.scbd-lite-pill-3 { background: #d1e7dd; color: #0f5132; }
+@media (max-width: 782px) { .scbd-lite-meta-box { grid-template-columns: 1fr; } }
