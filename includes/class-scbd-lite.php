@@ -78,6 +78,7 @@ final class Plugin {
 
     private function __construct() {
         add_action('init', [$this, 'load_textdomain']);
+        add_action('rest_api_init', [$this, 'register_rest_routes']);
         add_action('admin_menu', [$this, 'admin_menu']);
         add_action('add_meta_boxes', [$this, 'add_meta_boxes']);
         add_action('save_post', [$this, 'save_post'], 10, 2);
@@ -92,6 +93,64 @@ final class Plugin {
 
     public function load_textdomain(): void {
         load_plugin_textdomain('seo-control-bridge-for-divi-lite', false, dirname(plugin_basename(SCBD_LITE_FILE)) . '/languages');
+    }
+
+    public function register_rest_routes(): void {
+        register_rest_route('scbd-lite/v1', '/post/(?P<id>\d+)/seo', [
+            [
+                'methods' => \WP_REST_Server::READABLE,
+                'callback' => [$this, 'rest_get_seo'],
+                'permission_callback' => [$this, 'rest_can_edit_post'],
+                'args' => [
+                    'id' => [
+                        'required' => true,
+                        'validate_callback' => static fn($value): bool => is_numeric($value) && (int) $value > 0,
+                    ],
+                ],
+            ],
+            [
+                'methods' => \WP_REST_Server::EDITABLE,
+                'callback' => [$this, 'rest_save_seo'],
+                'permission_callback' => [$this, 'rest_can_edit_post'],
+                'args' => [
+                    'id' => [
+                        'required' => true,
+                        'validate_callback' => static fn($value): bool => is_numeric($value) && (int) $value > 0,
+                    ],
+                ],
+            ],
+        ]);
+    }
+
+    public function rest_can_edit_post(\WP_REST_Request $request): bool {
+        $post_id = (int) $request['id'];
+        return $post_id > 0 && current_user_can('edit_post', $post_id);
+    }
+
+    public function rest_get_seo(\WP_REST_Request $request): \WP_REST_Response {
+        $post_id = (int) $request['id'];
+        return new \WP_REST_Response([
+            'postId' => $post_id,
+            'fields' => $this->field_schema(),
+            'values' => $this->get_seo_values($post_id),
+        ]);
+    }
+
+    public function rest_save_seo(\WP_REST_Request $request): \WP_REST_Response {
+        $post_id = (int) $request['id'];
+        $posted = $request->get_param('values');
+        if (!is_array($posted)) {
+            $posted = [];
+        }
+
+        $values = $this->sanitize_seo_values($posted);
+        $this->save_seo_values($post_id, $values);
+
+        return new \WP_REST_Response([
+            'postId' => $post_id,
+            'saved' => true,
+            'values' => $this->get_seo_values($post_id),
+        ]);
     }
 
     public function admin_menu(): void {
@@ -120,12 +179,12 @@ final class Plugin {
                     <li><?php esc_html_e('SEO title, meta description, focus keyword, and canonical URL fields.', 'seo-control-bridge-for-divi-lite'); ?></li>
                     <li><?php esc_html_e('OpenGraph and X/Twitter title, description, and image URL fields.', 'seo-control-bridge-for-divi-lite'); ?></li>
                     <li><?php esc_html_e('Admin list SEO status columns.', 'seo-control-bridge-for-divi-lite'); ?></li>
-                    <li><?php esc_html_e('Divi-friendly admin bar launcher.', 'seo-control-bridge-for-divi-lite'); ?></li>
+                    <li><?php esc_html_e('Visual Builder overlay for editing the current page without leaving Divi.', 'seo-control-bridge-for-divi-lite'); ?></li>
                 </ul>
             </div>
             <div class="scbd-lite-card scbd-lite-pro-card">
                 <h2><?php esc_html_e('Need the Pro workflow?', 'seo-control-bridge-for-divi-lite'); ?></h2>
-                <p><?php esc_html_e('SEO Control Bridge for Divi Pro adds Visual Builder controls, bulk SEO tools, schema templates, social previews, imports/exports, and agency workflow features.', 'seo-control-bridge-for-divi-lite'); ?></p>
+                <p><?php esc_html_e('SEO Control Bridge for Divi Pro adds bulk SEO tools, schema templates, social previews, imports/exports, white-labeling, and agency workflow features.', 'seo-control-bridge-for-divi-lite'); ?></p>
                 <p><a class="button button-primary" href="https://eecons.com/product/seo-control-bridge-for-divi/" target="_blank" rel="noopener noreferrer"><?php esc_html_e('View Pro Version', 'seo-control-bridge-for-divi-lite'); ?></a></p>
             </div>
         </div>
@@ -150,11 +209,7 @@ final class Plugin {
         echo '<div class="scbd-lite-meta-box">';
         echo '<p class="description">' . esc_html__('These fields map to Rank Math metadata when Rank Math is active. They remain stored safely even when Rank Math is not active.', 'seo-control-bridge-for-divi-lite') . '</p>';
         foreach ($this->fields as $key => $field) {
-            $meta_key = $this->meta_key($key);
-            $value = get_post_meta($post->ID, $meta_key, true);
-            if ('' === $value && $this->is_rank_math_active()) {
-                $value = get_post_meta($post->ID, $field['rank_math_key'], true);
-            }
+            $value = $this->get_seo_value($post->ID, $key);
             printf('<p class="scbd-lite-field scbd-lite-field-%1$s"><label for="scbd_lite_%1$s"><strong>%2$s</strong></label>', esc_attr($key), esc_html($field['label']));
             if ('textarea' === $field['type']) {
                 printf('<textarea id="scbd_lite_%1$s" name="scbd_lite[%1$s]" rows="3" placeholder="%3$s">%2$s</textarea>', esc_attr($key), esc_textarea((string) $value), esc_attr($field['placeholder']));
@@ -181,14 +236,7 @@ final class Plugin {
         }
 
         $posted = wp_unslash($_POST['scbd_lite']);
-        foreach ($this->fields as $key => $field) {
-            $raw = $posted[$key] ?? '';
-            $value = is_string($raw) ? $raw : '';
-            $value = ('url' === $field['type']) ? esc_url_raw($value) : sanitize_textarea_field($value);
-
-            update_post_meta($post_id, $this->meta_key($key), $value);
-            update_post_meta($post_id, $field['rank_math_key'], $value);
-        }
+        $this->save_seo_values($post_id, is_array($posted) ? $posted : []);
     }
 
     public function admin_assets(string $hook): void {
@@ -197,19 +245,46 @@ final class Plugin {
     }
 
     public function frontend_assets(): void {
-        if (!is_user_logged_in() || !current_user_can('edit_posts')) {
+        if (!is_user_logged_in()) {
             return;
         }
+
+        $post_id = get_queried_object_id();
+        if (!$post_id || !current_user_can('edit_post', $post_id)) {
+            return;
+        }
+
         wp_enqueue_style('scbd-lite-builder', SCBD_LITE_URL . 'assets/css/builder.css', [], SCBD_LITE_VERSION);
         wp_enqueue_script('scbd-lite-builder', SCBD_LITE_URL . 'assets/js/builder.js', [], SCBD_LITE_VERSION, true);
+        wp_localize_script('scbd-lite-builder', 'SCBDLiteBuilder', [
+            'postId' => $post_id,
+            'restUrl' => esc_url_raw(rest_url('scbd-lite/v1/post/' . $post_id . '/seo')),
+            'nonce' => wp_create_nonce('wp_rest'),
+            'adminUrl' => esc_url_raw(admin_url('options-general.php?page=scbd-lite')),
+            'strings' => [
+                'button' => __('SEO Bridge Lite', 'seo-control-bridge-for-divi-lite'),
+                'title' => __('SEO Bridge Lite', 'seo-control-bridge-for-divi-lite'),
+                'description' => __('Edit SEO metadata for this page without leaving the Divi Visual Builder.', 'seo-control-bridge-for-divi-lite'),
+                'loading' => __('Loading SEO fields…', 'seo-control-bridge-for-divi-lite'),
+                'save' => __('Save SEO Fields', 'seo-control-bridge-for-divi-lite'),
+                'saving' => __('Saving…', 'seo-control-bridge-for-divi-lite'),
+                'saved' => __('Saved.', 'seo-control-bridge-for-divi-lite'),
+                'error' => __('Unable to load or save SEO fields. Please refresh and try again.', 'seo-control-bridge-for-divi-lite'),
+                'close' => __('Close', 'seo-control-bridge-for-divi-lite'),
+            ],
+        ]);
     }
 
     public function admin_bar_link(\WP_Admin_Bar $bar): void {
-        if (!is_admin_bar_showing() || !current_user_can('edit_posts')) {
+        if (!is_admin_bar_showing() || !is_user_logged_in()) {
             return;
         }
         $object_id = get_queried_object_id();
-        $href = $object_id ? get_edit_post_link($object_id, '') . '#scbd_lite_seo_fields' : admin_url('options-general.php?page=scbd-lite');
+        if ($object_id && current_user_can('edit_post', $object_id)) {
+            $href = '#scbd-lite-open';
+        } else {
+            $href = admin_url('options-general.php?page=scbd-lite');
+        }
         $bar->add_node([
             'id' => 'scbd-lite',
             'title' => __('SEO Bridge Lite', 'seo-control-bridge-for-divi-lite'),
@@ -237,6 +312,60 @@ final class Plugin {
             }
         }
         printf('<span class="scbd-lite-pill scbd-lite-pill-%1$d">%2$d/3</span>', esc_attr((string) $score), esc_html((string) $score));
+    }
+
+    private function field_schema(): array {
+        $schema = [];
+        foreach ($this->fields as $key => $field) {
+            $schema[] = [
+                'key' => $key,
+                'label' => $field['label'],
+                'type' => $field['type'],
+                'placeholder' => $field['placeholder'],
+            ];
+        }
+        return $schema;
+    }
+
+    private function get_seo_values(int $post_id): array {
+        $values = [];
+        foreach (array_keys($this->fields) as $key) {
+            $values[$key] = $this->get_seo_value($post_id, $key);
+        }
+        return $values;
+    }
+
+    private function get_seo_value(int $post_id, string $key): string {
+        if (!isset($this->fields[$key])) {
+            return '';
+        }
+        $value = get_post_meta($post_id, $this->meta_key($key), true);
+        if ('' === $value) {
+            $rank_math_value = get_post_meta($post_id, $this->fields[$key]['rank_math_key'], true);
+            if ('' !== $rank_math_value) {
+                $value = $rank_math_value;
+            }
+        }
+        return is_string($value) ? $value : '';
+    }
+
+    private function save_seo_values(int $post_id, array $values): void {
+        $values = $this->sanitize_seo_values($values);
+        foreach ($values as $key => $value) {
+            $field = $this->fields[$key];
+            update_post_meta($post_id, $this->meta_key($key), $value);
+            update_post_meta($post_id, $field['rank_math_key'], $value);
+        }
+    }
+
+    private function sanitize_seo_values(array $values): array {
+        $clean = [];
+        foreach ($this->fields as $key => $field) {
+            $raw = $values[$key] ?? '';
+            $value = is_string($raw) ? $raw : '';
+            $clean[$key] = ('url' === $field['type']) ? esc_url_raw($value) : sanitize_textarea_field($value);
+        }
+        return $clean;
     }
 
     private function meta_key(string $key): string {
