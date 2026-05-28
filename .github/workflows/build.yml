@@ -55,9 +55,9 @@ jobs:
 
           Highlights:
           - Native WordPress updater support through GitHub Releases.
-          - Improved update-state cleanup after successful plugin updates.
-          - Prevents stale Installed Plugins update banners after update completion.
-          - Dashboard notice now opens the native WordPress Updates screen.
+          - Fresh GitHub release lookup during WordPress update checks.
+          - Manual Check Again action for update detection.
+          - Reduced release metadata display cache.
 
           Installable plugin package:
           - seo-control-bridge-for-divi-lite.zip

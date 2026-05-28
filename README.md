@@ -56,11 +56,17 @@ This public Lite release is dependency-free and can be zipped directly.
 GPLv2 or later.
 
 
+## Release 1.0.6
+
+- Makes native WordPress update checks bypass the cached GitHub release response.
+- Adds a manual Check Again action for SCBD Lite update detection.
+- Reduces display cache lifetime for GitHub release metadata.
+
 ## Release 1.0.5
 
-- Adds Getting Started and View Details links to the Installed Plugins screen.
-- Adds first-run Getting Started redirect after plugin activation.
-- Expands plugin information modal content for GitHub-distributed installs.
+- Improves GitHub updater transient cleanup after one-click updates.
+- Prevents stale Installed Plugins update banners after successful updates.
+- Changes the custom dashboard notice to open the native WordPress Updates screen.
 
 ## GitHub Updates
 

@@ -7,7 +7,7 @@ final class GitHub_Updater {
     private const OWNER = 'MikeWard0321';
     private const REPO = 'seo-control-bridge-for-divi-lite';
     private const CACHE_KEY = 'scbd_lite_github_release';
-    private const CACHE_TTL = 2 * HOUR_IN_SECONDS;
+    private const CACHE_TTL = 30 * MINUTE_IN_SECONDS;
 
     private string $plugin_file;
     private string $plugin_basename;
@@ -23,6 +23,7 @@ final class GitHub_Updater {
         add_filter('plugins_api', [$this, 'plugin_info'], 20, 3);
         add_filter('upgrader_post_install', [$this, 'rename_after_install'], 10, 3);
         add_action('admin_notices', [$this, 'dashboard_update_notice']);
+        add_action('admin_init', [$this, 'maybe_force_update_check']);
         add_action('upgrader_process_complete', [$this, 'clear_cache_after_update'], 10, 2);
         add_action('admin_init', [$this, 'clear_stale_update_state']);
     }
@@ -32,7 +33,10 @@ final class GitHub_Updater {
             return $transient;
         }
 
-        $release = $this->get_latest_release();
+        // WordPress is actively rebuilding the update_plugins transient here.
+        // Do not use the cached GitHub response, or a site can miss a newly
+        // published release until the separate display cache expires.
+        $release = $this->get_latest_release(false);
         if (!$release || empty($release['version'])) {
             return $transient;
         }
@@ -141,19 +145,55 @@ final class GitHub_Updater {
             return;
         }
 
+        if (!empty($_GET['scbd-lite-update-check'])) {
+            printf(
+                '<div class="notice notice-info is-dismissible"><p><strong>%1$s</strong> %2$s</p></div>',
+                esc_html__('SEO Bridge Lite checked GitHub for updates.', 'seo-control-bridge-for-divi-lite'),
+                esc_html__('If a newer release exists, WordPress will show it after the native update check completes.', 'seo-control-bridge-for-divi-lite')
+            );
+        }
+
         $release = $this->get_latest_release();
         if (!$release || empty($release['version']) || !version_compare($release['version'], SCBD_LITE_VERSION, '>')) {
             return;
         }
 
         $updates_url = self_admin_url('update-core.php');
+        $force_url = wp_nonce_url(
+            self_admin_url('plugins.php?action=scbd_lite_force_update_check'),
+            'scbd_lite_force_update_check'
+        );
         printf(
-            '<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a></p></div>',
+            '<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a> | <a href="%5$s">%6$s</a></p></div>',
             esc_html__('SEO Bridge Lite update available.', 'seo-control-bridge-for-divi-lite'),
             esc_html(sprintf(__('Version %s is available from GitHub.', 'seo-control-bridge-for-divi-lite'), $release['version'])),
             esc_url($updates_url),
-            esc_html__('Open WordPress Updates', 'seo-control-bridge-for-divi-lite')
+            esc_html__('Open WordPress Updates', 'seo-control-bridge-for-divi-lite'),
+            esc_url($force_url),
+            esc_html__('Check again now', 'seo-control-bridge-for-divi-lite')
         );
+    }
+
+    public function maybe_force_update_check(): void {
+        if (!is_admin() || !current_user_can('update_plugins')) {
+            return;
+        }
+
+        $action = isset($_GET['action']) ? sanitize_key((string) wp_unslash($_GET['action'])) : '';
+        if ('scbd_lite_force_update_check' !== $action) {
+            return;
+        }
+
+        check_admin_referer('scbd_lite_force_update_check');
+        $this->clear_all_update_state();
+
+        if (!function_exists('wp_update_plugins')) {
+            require_once ABSPATH . 'wp-admin/includes/update.php';
+        }
+        wp_update_plugins();
+
+        wp_safe_redirect(add_query_arg('scbd-lite-update-check', '1', self_admin_url('plugins.php')));
+        exit;
     }
 
     public function clear_cache_after_update($upgrader, array $hook_extra): void {
@@ -354,7 +394,12 @@ final class GitHub_Updater {
     }
 
     private function local_changelog_markdown(): string {
-        return "## 1.0.5
+        return "## 1.0.6
+- Made WordPress update checks bypass the cached GitHub release response.
+- Added a manual Check Again action for SCBD Lite update detection.
+- Reduced display cache lifetime for GitHub release metadata.
+
+## 1.0.5
 - Improved GitHub updater transient cleanup after one-click updates.
 - Prevented stale Installed Plugins update banners after successful updates.
 - Changed the custom dashboard notice to open the native WordPress Updates screen.
