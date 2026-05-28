@@ -54,10 +54,10 @@ jobs:
           Public Lite release build for WordPress update delivery from GitHub.
 
           Highlights:
-          - Getting Started link in Installed Plugins.
-          - View Details modal support in Installed Plugins.
-          - First-run Getting Started page after activation.
           - Native WordPress updater support through GitHub Releases.
+          - Improved update-state cleanup after successful plugin updates.
+          - Prevents stale Installed Plugins update banners after update completion.
+          - Dashboard notice now opens the native WordPress Updates screen.
 
           Installable plugin package:
           - seo-control-bridge-for-divi-lite.zip

@@ -7,7 +7,7 @@ final class GitHub_Updater {
     private const OWNER = 'MikeWard0321';
     private const REPO = 'seo-control-bridge-for-divi-lite';
     private const CACHE_KEY = 'scbd_lite_github_release';
-    private const CACHE_TTL = 6 * HOUR_IN_SECONDS;
+    private const CACHE_TTL = 2 * HOUR_IN_SECONDS;
 
     private string $plugin_file;
     private string $plugin_basename;
@@ -19,10 +19,12 @@ final class GitHub_Updater {
 
     public function hooks(): void {
         add_filter('pre_set_site_transient_update_plugins', [$this, 'inject_update']);
+        add_filter('site_transient_update_plugins', [$this, 'normalize_update_transient']);
         add_filter('plugins_api', [$this, 'plugin_info'], 20, 3);
         add_filter('upgrader_post_install', [$this, 'rename_after_install'], 10, 3);
         add_action('admin_notices', [$this, 'dashboard_update_notice']);
         add_action('upgrader_process_complete', [$this, 'clear_cache_after_update'], 10, 2);
+        add_action('admin_init', [$this, 'clear_stale_update_state']);
     }
 
     public function inject_update(object $transient): object {
@@ -36,22 +38,33 @@ final class GitHub_Updater {
         }
 
         if (!version_compare($release['version'], SCBD_LITE_VERSION, '>')) {
-            unset($transient->response[$this->plugin_basename]);
+            return $this->mark_current($transient);
+        }
+
+        $transient->response[$this->plugin_basename] = $this->update_object($release);
+
+        if (isset($transient->no_update[$this->plugin_basename])) {
+            unset($transient->no_update[$this->plugin_basename]);
+        }
+
+        return $transient;
+    }
+
+    public function normalize_update_transient($transient) {
+        if (!is_object($transient)) {
             return $transient;
         }
 
-        $transient->response[$this->plugin_basename] = (object) [
-            'id' => $this->plugin_basename,
-            'slug' => self::REPO,
-            'plugin' => $this->plugin_basename,
-            'new_version' => $release['version'],
-            'url' => $release['html_url'],
-            'package' => $release['package'],
-            'tested' => $release['tested'],
-            'requires_php' => $release['requires_php'],
-            'requires' => $release['requires'],
-            'icons' => $this->icons(),
-        ];
+        if (empty($transient->response[$this->plugin_basename])) {
+            return $transient;
+        }
+
+        $update = $transient->response[$this->plugin_basename];
+        $new_version = is_object($update) && !empty($update->new_version) ? (string) $update->new_version : '';
+
+        if ('' !== $new_version && !version_compare($new_version, SCBD_LITE_VERSION, '>')) {
+            return $this->mark_current($transient);
+        }
 
         return $transient;
     }
@@ -133,23 +146,94 @@ final class GitHub_Updater {
             return;
         }
 
-        $update_url = wp_nonce_url(self_admin_url('update.php?action=upgrade-plugin&plugin=' . rawurlencode($this->plugin_basename)), 'upgrade-plugin_' . $this->plugin_basename);
+        $updates_url = self_admin_url('update-core.php');
         printf(
             '<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a></p></div>',
             esc_html__('SEO Bridge Lite update available.', 'seo-control-bridge-for-divi-lite'),
             esc_html(sprintf(__('Version %s is available from GitHub.', 'seo-control-bridge-for-divi-lite'), $release['version'])),
-            esc_url($update_url),
-            esc_html__('Update now', 'seo-control-bridge-for-divi-lite')
+            esc_url($updates_url),
+            esc_html__('Open WordPress Updates', 'seo-control-bridge-for-divi-lite')
         );
     }
 
     public function clear_cache_after_update($upgrader, array $hook_extra): void {
+        $is_this_plugin = false;
+
         if (!empty($hook_extra['plugins']) && in_array($this->plugin_basename, (array) $hook_extra['plugins'], true)) {
-            delete_site_transient(self::CACHE_KEY);
+            $is_this_plugin = true;
         }
         if (!empty($hook_extra['plugin']) && $hook_extra['plugin'] === $this->plugin_basename) {
-            delete_site_transient(self::CACHE_KEY);
+            $is_this_plugin = true;
         }
+
+        if ($is_this_plugin) {
+            $this->clear_all_update_state();
+        }
+    }
+
+    public function clear_stale_update_state(): void {
+        $updates = get_site_transient('update_plugins');
+        if (!is_object($updates) || empty($updates->response[$this->plugin_basename])) {
+            return;
+        }
+
+        $update = $updates->response[$this->plugin_basename];
+        $new_version = is_object($update) && !empty($update->new_version) ? (string) $update->new_version : '';
+
+        if ('' !== $new_version && !version_compare($new_version, SCBD_LITE_VERSION, '>')) {
+            $updates = $this->mark_current($updates);
+            set_site_transient('update_plugins', $updates);
+        }
+    }
+
+    private function clear_all_update_state(): void {
+        delete_site_transient(self::CACHE_KEY);
+        delete_site_transient('update_plugins');
+        wp_clean_plugins_cache(true);
+    }
+
+
+    private function update_object(array $release): object {
+        return (object) [
+            'id' => $this->plugin_basename,
+            'slug' => self::REPO,
+            'plugin' => $this->plugin_basename,
+            'new_version' => $release['version'],
+            'url' => $release['html_url'],
+            'package' => $release['package'],
+            'tested' => $release['tested'],
+            'requires_php' => $release['requires_php'],
+            'requires' => $release['requires'],
+            'icons' => $this->icons(),
+        ];
+    }
+
+    private function current_object(): object {
+        return (object) [
+            'id' => $this->plugin_basename,
+            'slug' => self::REPO,
+            'plugin' => $this->plugin_basename,
+            'new_version' => SCBD_LITE_VERSION,
+            'url' => 'https://github.com/' . self::OWNER . '/' . self::REPO,
+            'package' => '',
+            'tested' => '7.0',
+            'requires_php' => '8.0',
+            'requires' => '6.4',
+            'icons' => $this->icons(),
+        ];
+    }
+
+    private function mark_current(object $transient): object {
+        if (isset($transient->response[$this->plugin_basename])) {
+            unset($transient->response[$this->plugin_basename]);
+        }
+
+        if (!isset($transient->no_update) || !is_array($transient->no_update)) {
+            $transient->no_update = [];
+        }
+
+        $transient->no_update[$this->plugin_basename] = $this->current_object();
+        return $transient;
     }
 
     private function get_latest_release(bool $cached = true): ?array {
@@ -270,7 +354,19 @@ final class GitHub_Updater {
     }
 
     private function local_changelog_markdown(): string {
-        return "## 1.0.4\n- Added Getting Started links on the Plugins screen.\n- Added View Details modal support for the Installed Plugins screen.\n- Added first-run redirect to the Getting Started page after activation.\n- Expanded plugin details content for GitHub-distributed installs.\n\n## 1.0.3\n- Added GitHub release update checks for public Lite builds.";
+        return "## 1.0.5
+- Improved GitHub updater transient cleanup after one-click updates.
+- Prevented stale Installed Plugins update banners after successful updates.
+- Changed the custom dashboard notice to open the native WordPress Updates screen.
+
+## 1.0.4
+- Added Getting Started links on the Plugins screen.
+- Added View Details modal support for the Installed Plugins screen.
+- Added first-run redirect to the Getting Started page after activation.
+- Expanded plugin details content for GitHub-distributed installs.
+
+## 1.0.3
+- Added GitHub release update checks for public Lite builds.";
     }
 
     private function markdown_to_basic_html(string $markdown): string {

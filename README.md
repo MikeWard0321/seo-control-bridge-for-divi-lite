@@ -56,7 +56,7 @@ This public Lite release is dependency-free and can be zipped directly.
 GPLv2 or later.
 
 
-## Release 1.0.4
+## Release 1.0.5
 
 - Adds Getting Started and View Details links to the Installed Plugins screen.
 - Adds first-run Getting Started redirect after plugin activation.
