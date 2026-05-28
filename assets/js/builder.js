@@ -2,46 +2,206 @@
   'use strict';
 
   var config = window.SCBDLiteBuilder || null;
-  if (!config || !config.postId || !config.restUrl || !config.nonce) return;
+  if (!config || !config.postId || !config.restUrl || !config.nonce) {
+    return;
+  }
 
+  var STORAGE_KEY = 'scbdLiteLauncherPosition:' + config.postId;
+  var DRAG_THRESHOLD = 6;
+  var DEFAULT_MARGIN = 18;
   var modal = null;
   var form = null;
   var status = null;
+  var launcher = null;
   var loaded = false;
-  var activeRequest = null;
+  var activeFields = [];
+  var pointerState = null;
 
   function text(key) {
     return (config.strings && config.strings[key]) || key;
   }
 
+  function ready(callback) {
+    if (document.readyState === 'loading') {
+      document.addEventListener('DOMContentLoaded', callback);
+    } else {
+      callback();
+    }
+  }
+
   function createLauncher() {
-    if (document.querySelector('.scbd-lite-floating-launcher')) return;
+    launcher = document.querySelector('.scbd-lite-floating-launcher');
 
-    var button = document.createElement('button');
-    button.type = 'button';
-    button.className = 'scbd-lite-floating-launcher';
-    button.textContent = text('button');
-    button.setAttribute('aria-haspopup', 'dialog');
-    button.addEventListener('click', function (event) {
-      event.preventDefault();
-      openModal();
-    });
-    document.body.appendChild(button);
+    if (!launcher) {
+      launcher = document.createElement('button');
+      launcher.type = 'button';
+      launcher.className = 'scbd-lite-floating-launcher';
+      launcher.textContent = text('button');
+      launcher.setAttribute('aria-haspopup', 'dialog');
+      launcher.setAttribute('aria-controls', 'scbd-lite-modal');
+      launcher.setAttribute('title', text('button'));
+      document.body.appendChild(launcher);
+    }
 
-    var adminBarLink = document.querySelector('#wp-admin-bar-scbd-lite a');
-    if (adminBarLink) {
-      adminBarLink.setAttribute('href', '#scbd-lite-open');
-      adminBarLink.addEventListener('click', function (event) {
+    restoreLauncherPosition();
+    bindLauncherEvents();
+    bindAdminBarLink();
+    window.SCBDLiteOpen = openModal;
+  }
+
+  function bindLauncherEvents() {
+    launcher.addEventListener('pointerdown', onPointerDown);
+    launcher.addEventListener('click', onLauncherClick);
+    launcher.addEventListener('keydown', function (event) {
+      if (event.key === 'Enter' || event.key === ' ') {
         event.preventDefault();
         openModal();
-      });
+      }
+    });
+  }
+
+  function onLauncherClick(event) {
+    event.preventDefault();
+    event.stopPropagation();
+
+    if (pointerState && pointerState.wasDragged) {
+      pointerState = null;
+      return;
     }
+
+    openModal();
+  }
+
+  function onPointerDown(event) {
+    if (event.button !== 0) return;
+
+    var rect = launcher.getBoundingClientRect();
+    pointerState = {
+      id: event.pointerId,
+      startX: event.clientX,
+      startY: event.clientY,
+      left: rect.left,
+      top: rect.top,
+      width: rect.width,
+      height: rect.height,
+      wasDragged: false
+    };
+
+    launcher.setPointerCapture(event.pointerId);
+    launcher.classList.add('is-dragging');
+    launcher.addEventListener('pointermove', onPointerMove);
+    launcher.addEventListener('pointerup', onPointerUp);
+    launcher.addEventListener('pointercancel', onPointerUp);
+  }
+
+  function onPointerMove(event) {
+    if (!pointerState || event.pointerId !== pointerState.id) return;
+
+    var dx = event.clientX - pointerState.startX;
+    var dy = event.clientY - pointerState.startY;
+
+    if (Math.abs(dx) > DRAG_THRESHOLD || Math.abs(dy) > DRAG_THRESHOLD) {
+      pointerState.wasDragged = true;
+    }
+
+    if (!pointerState.wasDragged) return;
+
+    event.preventDefault();
+    setLauncherPosition(pointerState.left + dx, pointerState.top + dy, true);
+  }
+
+  function onPointerUp(event) {
+    if (!pointerState || event.pointerId !== pointerState.id) return;
+
+    launcher.releasePointerCapture(event.pointerId);
+    launcher.classList.remove('is-dragging');
+    launcher.removeEventListener('pointermove', onPointerMove);
+    launcher.removeEventListener('pointerup', onPointerUp);
+    launcher.removeEventListener('pointercancel', onPointerUp);
+
+    if (pointerState.wasDragged) {
+      saveLauncherPosition();
+    }
+
+    // Leave pointerState in place until click fires, so the synthetic click after drag is suppressed.
+    window.setTimeout(function () {
+      pointerState = null;
+    }, 0);
+  }
+
+  function restoreLauncherPosition() {
+    var saved = null;
+
+    try {
+      saved = JSON.parse(window.localStorage.getItem(STORAGE_KEY) || 'null');
+    } catch (error) {
+      saved = null;
+    }
+
+    if (saved && typeof saved.left === 'number' && typeof saved.top === 'number') {
+      setLauncherPosition(saved.left, saved.top, false);
+      return;
+    }
+
+    window.requestAnimationFrame(function () {
+      var rect = launcher.getBoundingClientRect();
+      var left = Math.max(DEFAULT_MARGIN, window.innerWidth - rect.width - DEFAULT_MARGIN);
+      var top = Math.max(DEFAULT_MARGIN, window.innerHeight - rect.height - DEFAULT_MARGIN);
+      setLauncherPosition(left, top, false);
+    });
+  }
+
+  function setLauncherPosition(left, top, dragging) {
+    if (!launcher) return;
+
+    var width = launcher.offsetWidth || 150;
+    var height = launcher.offsetHeight || 44;
+    var maxLeft = Math.max(DEFAULT_MARGIN, window.innerWidth - width - DEFAULT_MARGIN);
+    var maxTop = Math.max(DEFAULT_MARGIN, window.innerHeight - height - DEFAULT_MARGIN);
+    var nextLeft = clamp(left, DEFAULT_MARGIN, maxLeft);
+    var nextTop = clamp(top, DEFAULT_MARGIN, maxTop);
+
+    launcher.style.left = nextLeft + 'px';
+    launcher.style.top = nextTop + 'px';
+    launcher.style.right = 'auto';
+    launcher.style.bottom = 'auto';
+
+    if (dragging) {
+      launcher.setAttribute('aria-label', text('button') + ' — moving');
+    } else {
+      launcher.setAttribute('aria-label', text('button'));
+    }
+  }
+
+  function saveLauncherPosition() {
+    if (!launcher) return;
+
+    var rect = launcher.getBoundingClientRect();
+    try {
+      window.localStorage.setItem(STORAGE_KEY, JSON.stringify({
+        left: Math.round(rect.left),
+        top: Math.round(rect.top)
+      }));
+    } catch (error) {}
+  }
+
+  function bindAdminBarLink() {
+    var adminBarLink = document.querySelector('#wp-admin-bar-scbd-lite a');
+    if (!adminBarLink) return;
+
+    adminBarLink.setAttribute('href', '#scbd-lite-open');
+    adminBarLink.addEventListener('click', function (event) {
+      event.preventDefault();
+      event.stopPropagation();
+      openModal();
+    });
   }
 
   function buildModal() {
     if (modal) return;
 
     modal = document.createElement('div');
+    modal.id = 'scbd-lite-modal';
     modal.className = 'scbd-lite-modal';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
@@ -91,9 +251,13 @@
     buildModal();
     modal.hidden = false;
     document.documentElement.classList.add('scbd-lite-modal-open');
+
     var panel = modal.querySelector('.scbd-lite-modal-panel');
     if (panel) panel.focus();
-    if (!loaded) loadValues();
+
+    if (!loaded) {
+      loadValues();
+    }
   }
 
   function closeModal() {
@@ -127,13 +291,13 @@
 
     request('POST', { values: values })
       .then(function (data) {
-        renderFields(data.fields || (activeRequest && activeRequest.fields) || getRenderedFields(), data.values || values);
+        renderFields(activeFields, data.values || values);
         setStatus(text('saved'));
       })
       .catch(function () {
         setStatus(text('error'));
       })
-      .finally(function () {
+      .then(function () {
         if (submit) submit.disabled = false;
       });
   }
@@ -152,8 +316,10 @@
       options.body = JSON.stringify(body);
     }
 
-    return fetch(config.restUrl, options).then(function (response) {
-      if (!response.ok) throw new Error('Request failed');
+    return window.fetch(config.restUrl, options).then(function (response) {
+      if (!response.ok) {
+        throw new Error('SCBD Lite REST request failed with HTTP ' + response.status);
+      }
       return response.json();
     });
   }
@@ -161,9 +327,10 @@
   function renderFields(fields, values) {
     var wrapper = modal.querySelector('.scbd-lite-modal-fields');
     if (!wrapper) return;
-    activeRequest = { fields: fields };
 
+    activeFields = fields;
     wrapper.innerHTML = '';
+
     fields.forEach(function (field) {
       var id = 'scbd_lite_modal_' + field.key;
       var row = document.createElement('label');
@@ -182,6 +349,7 @@
         control = document.createElement('input');
         control.type = field.type || 'text';
       }
+
       control.id = id;
       control.name = field.key;
       control.value = values[field.key] || '';
@@ -215,19 +383,6 @@
     return values;
   }
 
-  function getRenderedFields() {
-    var fields = [];
-    form.querySelectorAll('[data-scbd-lite-key]').forEach(function (field) {
-      fields.push({
-        key: field.getAttribute('data-scbd-lite-key'),
-        label: field.closest('label') ? field.closest('label').querySelector('span').textContent : field.name,
-        type: field.tagName.toLowerCase() === 'textarea' ? 'textarea' : field.type,
-        placeholder: field.placeholder || ''
-      });
-    });
-    return fields;
-  }
-
   function updateCounter(field, counter) {
     counter.textContent = 'Characters: ' + field.value.length;
   }
@@ -236,15 +391,22 @@
     if (status) status.textContent = message || '';
   }
 
+  function clamp(value, min, max) {
+    return Math.min(Math.max(value, min), max);
+  }
+
   function escapeHtml(value) {
-    return String(value).replace(/[&<>"]/g, function (char) {
-      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;' })[char];
+    return String(value).replace(/[&<>"']/g, function (char) {
+      return ({ '&': '&amp;', '<': '&lt;', '>': '&gt;', '"': '&quot;', "'": '&#039;' })[char];
     });
   }
 
-  if (document.readyState === 'loading') {
-    document.addEventListener('DOMContentLoaded', createLauncher);
-  } else {
-    createLauncher();
-  }
+  window.addEventListener('resize', function () {
+    if (!launcher) return;
+    var rect = launcher.getBoundingClientRect();
+    setLauncherPosition(rect.left, rect.top, false);
+    saveLauncherPosition();
+  });
+
+  ready(createLauncher);
 })();

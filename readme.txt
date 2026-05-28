@@ -4,7 +4,7 @@ Tags: seo, divi, rank math, metadata, open graph
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.1
+Stable tag: 1.0.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -53,9 +53,11 @@ Yes. The settings screen includes a Pro upgrade link.
 
 == Changelog ==
 
-= 1.0.1 =
-* Rebuilt the front-end/Divi launcher as a real overlay workflow backed by REST API read/save endpoints.
-* Prevented the SEO Bridge Lite button from navigating away from the Divi Visual Builder.
+= 1.0.2 =
+* Rebuilt the front-end/Divi launcher as an iframe-local Visual Builder overlay.
+* Added draggable floating button positioning constrained to the current iframe viewport.
+* Saved the launcher position in browser localStorage and restored it after refreshes.
+* Increased overlay stacking and click handling so the Lite panel opens above the builder instead of navigating away.
 
 = 1.0.0 =
 * Initial public Lite release.
