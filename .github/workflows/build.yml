@@ -29,18 +29,17 @@ jobs:
 
       - name: Build ZIP
         run: |
-          cd ..
-          rm -rf build
-          mkdir -p build/${PLUGIN_SLUG}
-          rsync -a --exclude='.git' --exclude='.github' --exclude='*.zip' ${GITHUB_REPOSITORY##*/}/ build/${PLUGIN_SLUG}/
-          cd build
-          zip -r ${PLUGIN_SLUG}.zip ${PLUGIN_SLUG}
-
-      - name: Upload artifact
-        uses: actions/upload-artifact@v4
-        with:
-          name: seo-control-bridge-for-divi-lite
-          path: ../build/seo-control-bridge-for-divi-lite.zip
+          rm -rf dist
+          mkdir -p "dist/${PLUGIN_SLUG}"
+          rsync -a \
+            --exclude='.git' \
+            --exclude='.github' \
+            --exclude='dist' \
+            --exclude='*.zip' \
+            ./ "dist/${PLUGIN_SLUG}/"
+          cd dist
+          zip -r "${PLUGIN_SLUG}.zip" "${PLUGIN_SLUG}"
+          cp "${PLUGIN_SLUG}.zip" "../${PLUGIN_SLUG}.zip"
 
       - name: Publish GitHub release asset
         if: startsWith(github.ref, 'refs/tags/v')
@@ -64,4 +63,4 @@ jobs:
           - seo-control-bridge-for-divi-lite.zip
           EOF
           gh release view "$GITHUB_REF_NAME" >/dev/null 2>&1 || gh release create "$GITHUB_REF_NAME" --title "SEO Control Bridge for Divi Lite ${VERSION}" --notes-file "$NOTES_FILE"
-          gh release upload "$GITHUB_REF_NAME" ../build/seo-control-bridge-for-divi-lite.zip --clobber
+          gh release upload "$GITHUB_REF_NAME" "seo-control-bridge-for-divi-lite.zip" --clobber
