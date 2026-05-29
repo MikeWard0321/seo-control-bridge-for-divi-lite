@@ -56,6 +56,12 @@ This public Lite release is dependency-free and can be zipped directly.
 GPLv2 or later.
 
 
+## Release 1.0.8
+
+- Moves the custom update-available notice to the Dashboard only.
+- Lets Plugins and Dashboard > Updates rely entirely on WordPress native update UI.
+- Removes duplicate View Details output from the plugin row while preserving GitHub and Getting Started links.
+
 ## Release 1.0.7
 
 - Stops displaying the custom SCBD Lite update notice on the native WordPress Updates screen.

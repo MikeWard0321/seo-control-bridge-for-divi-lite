@@ -240,12 +240,9 @@ final class Plugin {
             return $links;
         }
 
-        $links[] = sprintf(
-            '<a href="%1$s" class="thickbox open-plugin-details-modal" aria-label="%2$s">%3$s</a>',
-            esc_url($this->plugin_details_url()),
-            esc_attr__('View SEO Control Bridge for Divi Lite details', 'seo-control-bridge-for-divi-lite'),
-            esc_html__('View Details', 'seo-control-bridge-for-divi-lite')
-        );
+        // WordPress already adds a native View Details link when plugin
+        // information is available. Only add the GitHub link here to avoid
+        // duplicate View Details entries in the plugin description column.
         $links[] = sprintf(
             '<a href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a>',
             esc_url('https://github.com/MikeWard0321/seo-control-bridge-for-divi-lite'),

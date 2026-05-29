@@ -3,7 +3,7 @@
  * Plugin Name: SEO Control Bridge for Divi Lite
  * Plugin URI: https://eecons.com/product/seo-control-bridge-for-divi/
  * Description: Free SEO workflow bridge for Divi and Rank Math. Adds lightweight SEO fields, social metadata helpers, and a Divi-friendly SEO launcher.
- * Version: 1.0.7
+ * Version: 1.0.8
  * Requires at least: 6.4
  * Requires PHP: 8.0
  * Tested up to: 7.0
@@ -17,7 +17,7 @@
 
 defined('ABSPATH') || exit;
 
-define('SCBD_LITE_VERSION', '1.0.7');
+define('SCBD_LITE_VERSION', '1.0.8');
 define('SCBD_LITE_FILE', __FILE__);
 define('SCBD_LITE_DIR', plugin_dir_path(__FILE__));
 define('SCBD_LITE_URL', plugin_dir_url(__FILE__));

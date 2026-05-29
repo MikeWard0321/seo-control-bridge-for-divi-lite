@@ -141,22 +141,21 @@ final class GitHub_Updater {
         }
 
         $screen = get_current_screen();
-        if (!$screen || !in_array($screen->id, ['dashboard', 'plugins'], true)) {
+        if (!$screen || 'dashboard' !== $screen->id) {
             return;
         }
 
-        // Do not print SCBD Lite's custom notice on WordPress' update-core
-        // screens. WordPress renders admin_notices before the plugin upgrade
-        // routine completes, so an update notice can appear above a successful
-        // upgrade result on the same request. The native Updates screen already
-        // shows this plugin through the update_plugins transient.
-
+        // Keep custom update notices off Plugins and Dashboard > Updates.
+        // WordPress updates plugins in-place on plugins.php and renders notices
+        // before update-core.php finishes upgrades, so a custom notice can look
+        // stale even after the native updater succeeds. Native WordPress update
+        // rows/badges remain the source of truth outside the Dashboard.
 
         if (!empty($_GET['scbd-lite-update-check'])) {
             printf(
                 '<div class="notice notice-info is-dismissible"><p><strong>%1$s</strong> %2$s</p></div>',
                 esc_html__('SEO Bridge Lite checked GitHub for updates.', 'seo-control-bridge-for-divi-lite'),
-                esc_html__('If a newer release exists, WordPress will show it after the native update check completes.', 'seo-control-bridge-for-divi-lite')
+                esc_html__('If a newer release exists, WordPress will show it through the native update system.', 'seo-control-bridge-for-divi-lite')
             );
         }
 
@@ -199,7 +198,7 @@ final class GitHub_Updater {
         }
         wp_update_plugins();
 
-        wp_safe_redirect(add_query_arg('scbd-lite-update-check', '1', self_admin_url('plugins.php')));
+        wp_safe_redirect(add_query_arg('scbd-lite-update-check', '1', self_admin_url('index.php')));
         exit;
     }
 
@@ -401,7 +400,11 @@ final class GitHub_Updater {
     }
 
     private function local_changelog_markdown(): string {
-        return "## 1.0.7
+        return "## 1.0.8
+- Moved the custom update-available notice to the Dashboard only so Plugins and Dashboard > Updates rely entirely on WordPress native update UI.
+- Removed duplicate plugin-row View Details output while preserving the GitHub link.
+
+## 1.0.7
 - Stopped showing the custom SCBD Lite update notice on the native WordPress Updates screen to prevent stale notice output during successful upgrades.
 - Kept update detection available through Dashboard and Installed Plugins while leaving Dashboard > Updates to WordPress core.
 
