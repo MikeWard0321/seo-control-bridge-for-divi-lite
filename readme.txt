@@ -4,7 +4,7 @@ Tags: seo, divi, rank math, metadata, open graph
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.8
+Stable tag: 1.0.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -70,10 +70,10 @@ Yes. The settings screen includes a Pro upgrade link.
 
 == Changelog ==
 
-= 1.0.8 =
-* Moved the custom update-available notice to the Dashboard only.
-* Plugins and Dashboard > Updates now rely entirely on WordPress native update UI.
-* Removed duplicate View Details output from the plugin row while preserving GitHub and Getting Started links.
+= 1.0.9 =
+* Added a controlled native update-state refresh on Dashboard, Installed Plugins, and WordPress Updates screens.
+* Makes newly published GitHub releases visible without waiting for WordPress' scheduled plugin-update check.
+* Changed the custom Dashboard update notice to read from WordPress native update data instead of a separate GitHub cache.
 
 = 1.0.7 =
 * Stopped displaying the custom SCBD Lite update notice on the native WordPress Updates screen.

@@ -56,11 +56,11 @@ This public Lite release is dependency-free and can be zipped directly.
 GPLv2 or later.
 
 
-## Release 1.0.8
+## Release 1.0.9
 
-- Moves the custom update-available notice to the Dashboard only.
-- Lets Plugins and Dashboard > Updates rely entirely on WordPress native update UI.
-- Removes duplicate View Details output from the plugin row while preserving GitHub and Getting Started links.
+- Adds a controlled native update-state refresh on Dashboard, Installed Plugins, and WordPress Updates screens.
+- Makes newly published GitHub releases visible without waiting for WordPress' scheduled plugin-update check.
+- Changes the custom Dashboard update notice to read from WordPress native update data instead of a separate GitHub cache.
 
 ## Release 1.0.7
 

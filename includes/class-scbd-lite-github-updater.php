@@ -7,7 +7,9 @@ final class GitHub_Updater {
     private const OWNER = 'MikeWard0321';
     private const REPO = 'seo-control-bridge-for-divi-lite';
     private const CACHE_KEY = 'scbd_lite_github_release';
+    private const LAST_CHECK_KEY = 'scbd_lite_last_native_update_check';
     private const CACHE_TTL = 30 * MINUTE_IN_SECONDS;
+    private const NATIVE_CHECK_TTL = 15 * MINUTE_IN_SECONDS;
 
     private string $plugin_file;
     private string $plugin_basename;
@@ -24,6 +26,7 @@ final class GitHub_Updater {
         add_filter('upgrader_post_install', [$this, 'rename_after_install'], 10, 3);
         add_action('admin_notices', [$this, 'dashboard_update_notice']);
         add_action('admin_init', [$this, 'maybe_force_update_check']);
+        add_action('admin_init', [$this, 'maybe_refresh_native_update_state'], 5);
         add_action('upgrader_process_complete', [$this, 'clear_cache_after_update'], 10, 2);
         add_action('admin_init', [$this, 'clear_stale_update_state']);
     }
@@ -159,8 +162,8 @@ final class GitHub_Updater {
             );
         }
 
-        $release = $this->get_latest_release();
-        if (!$release || empty($release['version']) || !version_compare($release['version'], SCBD_LITE_VERSION, '>')) {
+        $update = $this->current_native_update_object();
+        if (!$update) {
             return;
         }
 
@@ -172,7 +175,7 @@ final class GitHub_Updater {
         printf(
             '<div class="notice notice-warning"><p><strong>%1$s</strong> %2$s <a href="%3$s">%4$s</a> | <a href="%5$s">%6$s</a></p></div>',
             esc_html__('SEO Bridge Lite update available.', 'seo-control-bridge-for-divi-lite'),
-            esc_html(sprintf(__('Version %s is available from GitHub.', 'seo-control-bridge-for-divi-lite'), $release['version'])),
+            esc_html(sprintf(__('Version %s is available from GitHub.', 'seo-control-bridge-for-divi-lite'), (string) $update->new_version)),
             esc_url($updates_url),
             esc_html__('Open WordPress Updates', 'seo-control-bridge-for-divi-lite'),
             esc_url($force_url),
@@ -200,6 +203,75 @@ final class GitHub_Updater {
 
         wp_safe_redirect(add_query_arg('scbd-lite-update-check', '1', self_admin_url('index.php')));
         exit;
+    }
+
+    public function maybe_refresh_native_update_state(): void {
+        if (!is_admin() || wp_doing_ajax() || !current_user_can('update_plugins')) {
+            return;
+        }
+
+        global $pagenow;
+        if (!in_array((string) $pagenow, ['index.php', 'plugins.php', 'update-core.php'], true)) {
+            return;
+        }
+
+        $last_check = (int) get_site_transient(self::LAST_CHECK_KEY);
+        if ($last_check > 0 && (time() - $last_check) < self::NATIVE_CHECK_TTL) {
+            return;
+        }
+
+        set_site_transient(self::LAST_CHECK_KEY, time(), self::NATIVE_CHECK_TTL);
+        $this->refresh_native_update_transient();
+    }
+
+    private function refresh_native_update_transient(): void {
+        $release = $this->get_latest_release(false);
+        if (!$release || empty($release['version'])) {
+            return;
+        }
+
+        $updates = get_site_transient('update_plugins');
+        if (!is_object($updates)) {
+            $updates = new \stdClass();
+        }
+        if (!isset($updates->response) || !is_array($updates->response)) {
+            $updates->response = [];
+        }
+        if (!isset($updates->no_update) || !is_array($updates->no_update)) {
+            $updates->no_update = [];
+        }
+        if (!isset($updates->checked) || !is_array($updates->checked)) {
+            $updates->checked = [];
+        }
+        if (empty($updates->last_checked)) {
+            $updates->last_checked = time();
+        }
+
+        $updates->checked[$this->plugin_basename] = SCBD_LITE_VERSION;
+
+        if (version_compare((string) $release['version'], SCBD_LITE_VERSION, '>')) {
+            $updates->response[$this->plugin_basename] = $this->update_object($release);
+            unset($updates->no_update[$this->plugin_basename]);
+        } else {
+            $updates = $this->mark_current($updates);
+        }
+
+        set_site_transient('update_plugins', $updates);
+    }
+
+    private function current_native_update_object(): ?object {
+        $updates = get_site_transient('update_plugins');
+        if (!is_object($updates) || empty($updates->response[$this->plugin_basename]) || !is_object($updates->response[$this->plugin_basename])) {
+            return null;
+        }
+
+        $update = $updates->response[$this->plugin_basename];
+        $new_version = !empty($update->new_version) ? (string) $update->new_version : '';
+        if ('' === $new_version || !version_compare($new_version, SCBD_LITE_VERSION, '>')) {
+            return null;
+        }
+
+        return $update;
     }
 
     public function clear_cache_after_update($upgrader, array $hook_extra): void {
@@ -234,6 +306,7 @@ final class GitHub_Updater {
 
     private function clear_all_update_state(): void {
         delete_site_transient(self::CACHE_KEY);
+        delete_site_transient(self::LAST_CHECK_KEY);
         delete_site_transient('update_plugins');
         wp_clean_plugins_cache(true);
     }
@@ -400,7 +473,11 @@ final class GitHub_Updater {
     }
 
     private function local_changelog_markdown(): string {
-        return "## 1.0.8
+        return "## 1.0.9
+- Added a controlled native update-state refresh on Dashboard, Installed Plugins, and WordPress Updates screens so new GitHub releases appear without waiting for WordPress scheduled update checks.
+- Changed the custom Dashboard update notice to read from WordPress native update data instead of a separate GitHub cache.
+
+## 1.0.8
 - Moved the custom update-available notice to the Dashboard only so Plugins and Dashboard > Updates rely entirely on WordPress native update UI.
 - Removed duplicate plugin-row View Details output while preserving the GitHub link.
 
