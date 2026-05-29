@@ -141,9 +141,16 @@ final class GitHub_Updater {
         }
 
         $screen = get_current_screen();
-        if (!$screen || !in_array($screen->id, ['dashboard', 'plugins', 'update-core'], true)) {
+        if (!$screen || !in_array($screen->id, ['dashboard', 'plugins'], true)) {
             return;
         }
+
+        // Do not print SCBD Lite's custom notice on WordPress' update-core
+        // screens. WordPress renders admin_notices before the plugin upgrade
+        // routine completes, so an update notice can appear above a successful
+        // upgrade result on the same request. The native Updates screen already
+        // shows this plugin through the update_plugins transient.
+
 
         if (!empty($_GET['scbd-lite-update-check'])) {
             printf(
@@ -394,7 +401,11 @@ final class GitHub_Updater {
     }
 
     private function local_changelog_markdown(): string {
-        return "## 1.0.6
+        return "## 1.0.7
+- Stopped showing the custom SCBD Lite update notice on the native WordPress Updates screen to prevent stale notice output during successful upgrades.
+- Kept update detection available through Dashboard and Installed Plugins while leaving Dashboard > Updates to WordPress core.
+
+## 1.0.6
 - Made WordPress update checks bypass the cached GitHub release response.
 - Added a manual Check Again action for SCBD Lite update detection.
 - Reduced display cache lifetime for GitHub release metadata.

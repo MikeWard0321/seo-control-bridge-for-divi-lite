@@ -56,11 +56,11 @@ This public Lite release is dependency-free and can be zipped directly.
 GPLv2 or later.
 
 
-## Release 1.0.6
+## Release 1.0.7
 
-- Makes native WordPress update checks bypass the cached GitHub release response.
-- Adds a manual Check Again action for SCBD Lite update detection.
-- Reduces display cache lifetime for GitHub release metadata.
+- Stops displaying the custom SCBD Lite update notice on the native WordPress Updates screen.
+- Prevents stale orange notice output above successful update results.
+- Keeps update detection available through Dashboard, Installed Plugins, and native WordPress update transients.
 
 ## Release 1.0.5
 
