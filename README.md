@@ -1,34 +1,33 @@
-<p align="center">
-  <img src="assets/brand/scbd-lite-github-banner.png" alt="SEO Control Bridge for Divi Lite" width="900">
-</p>
+# SEO Control Bridge - Lite
 
-# SEO Control Bridge for Divi Lite
+SEO Control Bridge - Lite is a WordPress plugin for sites using both the Divi Theme and Rank Math SEO.
 
-Free SEO workflow bridge for Divi and Rank Math by Electronic Enterprises, Inc.
+It bridges the gap between Divi Visual Builder workflows and Rank Math SEO metadata controls, giving developers, agencies, and site admins more control over page-level SEO while they are working inside the visual builder.
 
-SEO Control Bridge for Divi Lite gives site owners a lightweight way to edit Rank Math-compatible SEO metadata from a clean WordPress workflow. It is intentionally separate from the Pro product and does not include licensing, protected updates, bulk tools, schema templates, or agency features.
+## Why this exists
 
+Divi is where the page is designed. Rank Math is where the SEO metadata is output. Without a bridge, editors often have to leave the visual workflow to manage SEO fields elsewhere.
 
-## GitHub branding assets
+SEO Control Bridge - Lite keeps the essential metadata workflow close to the page being built.
 
-This repository includes public branding assets for GitHub presentation:
+## Requirements
 
-- `assets/brand/scbd-lite-github-banner.png` — README banner.
-- `assets/brand/scbd-lite-logo-512.png` — square project logo/icon.
-- `.github/assets/social-preview.png` — recommended GitHub social preview image.
+- WordPress 6.5+
+- PHP 8.0+
+- Divi Theme
+- Rank Math SEO
 
-GitHub repository social previews are configured in the repository settings UI, so the image is included in the repo and should also be uploaded manually under repository Settings > Social preview.
+Rank Math SEO is declared through the WordPress `Requires Plugins` header. Divi Theme is detected at runtime and shown in the plugin's Getting Started screen.
 
 ## Lite features
 
 - SEO title, meta description, focus keyword, and canonical URL fields.
 - OpenGraph and X/Twitter title, description, and image URL fields.
-- Rank Math-compatible metadata saves.
+- Rank Math SEO-compatible metadata saves.
+- Divi Visual Builder/front-end overlay for logged-in editors.
+- Draggable floating launcher with per-page position memory.
 - Page/post SEO completion column.
-- Visual Builder/front-end overlay for logged-in editors.
-- Pro upgrade link to EECONS.
-- Getting Started and View Details links from the Installed Plugins screen.
-- First-run Getting Started screen after activation.
+- Getting Started screen after activation.
 
 ## Pro features not included
 
@@ -36,72 +35,28 @@ GitHub repository social previews are configured in the repository settings UI, 
 - Bulk SEO Manager.
 - Schema templates and custom JSON-LD workflow.
 - Pro SEO Control Center modal with schema, social preview, bulk, import/export, and agency tools.
-- Social previews.
+- Advanced social previews.
 - Import/export.
 - White-labeling.
 - Agency workflow tools.
 
-## Requirements
+## WordPress.org build note
 
-- WordPress 6.4+
-- PHP 8.0+
-- Rank Math recommended but not strictly required
-- Divi recommended but not strictly required
+This WordPress.org-safe build removes the GitHub updater. Once approved on WordPress.org, updates are handled by the native WordPress.org plugin update system.
 
 ## Getting Started
 
-1. Install and activate the plugin ZIP.
-2. Open the automatic Getting Started screen, or use Settings > SEO Bridge Lite.
-3. Confirm Rank Math is active if you want Rank Math to output the saved metadata.
-4. Edit a page or post and complete the SEO Bridge Lite meta box.
-5. In Divi Visual Builder, use the draggable SEO Bridge Lite button to open the overlay without leaving the builder.
-6. Check the SEO completion column on Posts or Pages for a quick 0/3 to 3/3 metadata status.
+1. Install and activate Divi Theme.
+2. Install and activate Rank Math SEO.
+3. Install and activate SEO Control Bridge - Lite.
+4. Open Settings > SEO Bridge - Lite and confirm both requirements are detected.
+5. Open a Divi-built page in the Visual Builder.
+6. Use the floating SEO Bridge - Lite button to edit metadata without leaving the builder.
 
-## Development
+## Trademark notice
 
-```bash
-composer install
-npm install
-```
-
-This public Lite release is dependency-free and can be zipped directly.
+SEO Control Bridge - Lite is not affiliated with, endorsed by, or sponsored by Rank Math, Elegant Themes, or Divi. Rank Math and Divi are trademarks of their respective owners.
 
 ## License
 
 GPLv2 or later.
-
-
-## Release 1.0.10
-
-- Adds GitHub-facing branding assets, including a README banner, square project logo, and social preview image.
-- Documents how to set the repository social preview image in GitHub settings.
-
-## Release 1.0.9
-
-- Adds a controlled native update-state refresh on Dashboard, Installed Plugins, and WordPress Updates screens.
-- Makes newly published GitHub releases visible without waiting for WordPress' scheduled plugin-update check.
-- Changes the custom Dashboard update notice to read from WordPress native update data instead of a separate GitHub cache.
-
-## Release 1.0.7
-
-- Stops displaying the custom SCBD Lite update notice on the native WordPress Updates screen.
-- Prevents stale orange notice output above successful update results.
-- Keeps update detection available through Dashboard, Installed Plugins, and native WordPress update transients.
-
-## Release 1.0.5
-
-- Improves GitHub updater transient cleanup after one-click updates.
-- Prevents stale Installed Plugins update banners after successful updates.
-- Changes the custom dashboard notice to open the native WordPress Updates screen.
-
-## GitHub Updates
-
-Lite checks the public GitHub Releases API for newer tagged releases. When a release newer than the installed version is available, WordPress shows the update in Dashboard > Updates and Plugins > Installed Plugins.
-
-For best results, each GitHub release should include this asset:
-
-```text
-seo-control-bridge-for-divi-lite.zip
-```
-
-The included GitHub Actions workflow builds that ZIP and attaches it to tagged GitHub releases.

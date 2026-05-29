@@ -27,3 +27,7 @@
   .scbd-lite-hero-actions { justify-content: flex-start; }
   .scbd-lite-grid { grid-template-columns: 1fr; }
 }
+.scbd-lite-requirements-ok { border-left: 4px solid #00a32a; }
+.scbd-lite-requirements-warning { border-left: 4px solid #d63638; }
+.scbd-lite-requirements { margin: 12px 0 0; }
+.scbd-lite-requirements li { margin: 6px 0; }
