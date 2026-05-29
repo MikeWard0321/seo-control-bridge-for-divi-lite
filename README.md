@@ -1,8 +1,23 @@
+<p align="center">
+  <img src="assets/brand/scbd-lite-github-banner.png" alt="SEO Control Bridge for Divi Lite" width="900">
+</p>
+
 # SEO Control Bridge for Divi Lite
 
 Free SEO workflow bridge for Divi and Rank Math by Electronic Enterprises, Inc.
 
 SEO Control Bridge for Divi Lite gives site owners a lightweight way to edit Rank Math-compatible SEO metadata from a clean WordPress workflow. It is intentionally separate from the Pro product and does not include licensing, protected updates, bulk tools, schema templates, or agency features.
+
+
+## GitHub branding assets
+
+This repository includes public branding assets for GitHub presentation:
+
+- `assets/brand/scbd-lite-github-banner.png` — README banner.
+- `assets/brand/scbd-lite-logo-512.png` — square project logo/icon.
+- `.github/assets/social-preview.png` — recommended GitHub social preview image.
+
+GitHub repository social previews are configured in the repository settings UI, so the image is included in the repo and should also be uploaded manually under repository Settings > Social preview.
 
 ## Lite features
 
@@ -55,6 +70,11 @@ This public Lite release is dependency-free and can be zipped directly.
 
 GPLv2 or later.
 
+
+## Release 1.0.10
+
+- Adds GitHub-facing branding assets, including a README banner, square project logo, and social preview image.
+- Documents how to set the repository social preview image in GitHub settings.
 
 ## Release 1.0.9
 

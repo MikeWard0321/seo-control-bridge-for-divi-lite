@@ -54,10 +54,9 @@ jobs:
           Public Lite release build for WordPress update delivery from GitHub.
 
           Highlights:
-          - Native WordPress updater support through GitHub Releases.
-          - Fresh GitHub release lookup during WordPress update checks.
-          - Manual Check Again action for update detection.
-          - Reduced release metadata display cache.
+          - GitHub release ZIP for native WordPress update delivery.
+          - Public README and repo branding assets.
+          - Lite workflow bridge for Divi and Rank Math.
 
           Installable plugin package:
           - seo-control-bridge-for-divi-lite.zip

@@ -4,7 +4,7 @@ Tags: seo, divi, rank math, metadata, open graph
 Requires at least: 6.4
 Tested up to: 7.0
 Requires PHP: 8.0
-Stable tag: 1.0.9
+Stable tag: 1.0.10
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -69,6 +69,10 @@ Yes. The settings screen includes a Pro upgrade link.
 3. Lite settings and Pro upgrade screen.
 
 == Changelog ==
+
+= 1.0.10 =
+* Added GitHub-facing branding assets for the README, repo logo, and social preview.
+* Added documentation for configuring the GitHub repository social preview image.
 
 = 1.0.9 =
 * Added a controlled native update-state refresh on Dashboard, Installed Plugins, and WordPress Updates screens.
