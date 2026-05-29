@@ -5,7 +5,7 @@ Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
 Requires Plugins: seo-by-rank-math
-Stable tag: 1.1.0
+Stable tag: 1.1.1
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,13 @@ Yes. The settings screen includes a Pro upgrade link for users who need bulk SEO
 4. SEO completion column for pages and posts.
 
 == Changelog ==
+
+= 1.1.1 =
+* Prevented duplicate Visual Builder launch buttons by suppressing the parent Divi Builder shell launcher.
+* Removed manual translation loading for WordPress.org-hosted translation compatibility.
+* Removed the unused Domain Path header.
+* Improved form input handling for Plugin Check compliance.
+* Removed hidden development files from the WordPress.org package.
 
 = 1.1.0 =
 * Renamed the public plugin to SEO Control Bridge - Lite.

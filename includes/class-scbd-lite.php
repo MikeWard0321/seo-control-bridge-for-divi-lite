@@ -77,7 +77,6 @@ final class Plugin {
     }
 
     private function __construct() {
-        add_action('init', [$this, 'load_textdomain']);
         add_action('rest_api_init', [$this, 'register_rest_routes']);
         add_action('admin_menu', [$this, 'admin_menu']);
         add_action('admin_notices', [$this, 'admin_notices']);
@@ -126,9 +125,6 @@ final class Plugin {
         );
     }
 
-    public function load_textdomain(): void {
-        load_plugin_textdomain('seo-control-bridge-lite', false, dirname(plugin_basename(SCBD_LITE_FILE)) . '/languages');
-    }
 
     public function register_rest_routes(): void {
         register_rest_route('scbd-lite/v1', '/post/(?P<id>\d+)/seo', [
@@ -312,7 +308,9 @@ final class Plugin {
             return;
         }
         delete_transient('scbd_lite_activation_redirect');
-        if (!empty($_GET['activate-multi']) || !empty($_GET['networkwide'])) {
+        $activate_multi = filter_input(INPUT_GET, 'activate-multi', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $networkwide = filter_input(INPUT_GET, 'networkwide', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (!empty($activate_multi) || !empty($networkwide)) {
             return;
         }
         wp_safe_redirect(admin_url('options-general.php?page=scbd-lite'));
@@ -357,7 +355,8 @@ final class Plugin {
     }
 
     public function save_post(int $post_id, \WP_Post $post): void {
-        if (!isset($_POST['scbd_lite_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['scbd_lite_nonce'])), 'scbd_lite_save_meta')) {
+        $nonce = filter_input(INPUT_POST, 'scbd_lite_nonce', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (!$nonce || !wp_verify_nonce($nonce, 'scbd_lite_save_meta')) {
             return;
         }
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
@@ -366,12 +365,15 @@ final class Plugin {
         if (!current_user_can('edit_post', $post_id)) {
             return;
         }
-        if (!isset($_POST['scbd_lite']) || !is_array($_POST['scbd_lite'])) {
+
+        $posted = filter_input(INPUT_POST, 'scbd_lite', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
+        if (!is_array($posted)) {
             return;
         }
 
-        $posted = wp_unslash($_POST['scbd_lite']);
-        $this->save_seo_values($post_id, is_array($posted) ? $posted : []);
+        $posted = map_deep($posted, 'sanitize_textarea_field');
+        $values = $this->sanitize_seo_values($posted);
+        $this->save_seo_values($post_id, $values);
     }
 
     public function admin_assets(string $hook): void {

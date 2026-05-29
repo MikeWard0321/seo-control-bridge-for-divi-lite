@@ -17,6 +17,35 @@
   var activeFields = [];
   var pointerState = null;
 
+  function isDiviBuilderParentShell() {
+    if (window.self !== window.top) {
+      return false;
+    }
+
+    var search = window.location.search || '';
+    if (/[?&]et_fb=1(?:&|$)/.test(search)) {
+      return true;
+    }
+
+    var body = document.body;
+    var html = document.documentElement;
+    return !!(
+      (body && (body.classList.contains('et-fb') || body.classList.contains('et-db'))) ||
+      (html && html.classList.contains('et-fb-root-ancestor'))
+    );
+  }
+
+  function bindParentAdminBarBridge() {
+    bindAdminBarLink(function () {
+      var frames = document.querySelectorAll('iframe');
+      frames.forEach(function (frame) {
+        try {
+          frame.contentWindow.postMessage({ type: 'scbd-lite-open' }, window.location.origin);
+        } catch (error) {}
+      });
+    });
+  }
+
   function text(key) {
     return (config.strings && config.strings[key]) || key;
   }
@@ -185,7 +214,7 @@
     } catch (error) {}
   }
 
-  function bindAdminBarLink() {
+  function bindAdminBarLink(callback) {
     var adminBarLink = document.querySelector('#wp-admin-bar-scbd-lite a');
     if (!adminBarLink) return;
 
@@ -193,7 +222,11 @@
     adminBarLink.addEventListener('click', function (event) {
       event.preventDefault();
       event.stopPropagation();
-      openModal();
+      if (typeof callback === 'function') {
+        callback();
+      } else {
+        openModal();
+      }
     });
   }
 
@@ -408,5 +441,21 @@
     saveLauncherPosition();
   });
 
-  ready(createLauncher);
+  window.addEventListener('message', function (event) {
+    if (event.origin !== window.location.origin) {
+      return;
+    }
+    if (event.data && event.data.type === 'scbd-lite-open') {
+      openModal();
+    }
+  });
+
+  ready(function () {
+    if (isDiviBuilderParentShell()) {
+      bindParentAdminBarBridge();
+      return;
+    }
+
+    createLauncher();
+  });
 })();
