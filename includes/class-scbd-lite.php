@@ -1,5 +1,5 @@
 <?php
-namespace SCBD_Lite;
+namespace SEO_Control_Bridge_Lite;
 
 defined('ABSPATH') || exit;
 
@@ -77,15 +77,17 @@ final class Plugin {
     }
 
     private function __construct() {
-        add_action('init', [$this, 'load_textdomain']);
         add_action('rest_api_init', [$this, 'register_rest_routes']);
+        add_action('wp_ajax_seo_control_bridge_lite_get_seo', [$this, 'ajax_get_seo']);
+        add_action('wp_ajax_seo_control_bridge_lite_save_seo', [$this, 'ajax_save_seo']);
         add_action('admin_menu', [$this, 'admin_menu']);
+        add_action('admin_notices', [$this, 'admin_notices']);
         add_action('add_meta_boxes', [$this, 'add_meta_boxes']);
         add_action('save_post', [$this, 'save_post'], 10, 2);
         add_action('admin_enqueue_scripts', [$this, 'admin_assets']);
         add_action('wp_enqueue_scripts', [$this, 'frontend_assets']);
         add_action('admin_bar_menu', [$this, 'admin_bar_link'], 90);
-        add_filter('plugin_action_links_' . plugin_basename(SCBD_LITE_FILE), [$this, 'plugin_action_links']);
+        add_filter('plugin_action_links_' . plugin_basename(SEO_CONTROL_BRIDGE_LITE_FILE), [$this, 'plugin_action_links']);
         add_filter('plugin_row_meta', [$this, 'plugin_row_meta'], 10, 2);
         add_action('admin_enqueue_scripts', [$this, 'plugin_details_assets']);
         add_action('activated_plugin', [$this, 'activation_redirect']);
@@ -96,9 +98,35 @@ final class Plugin {
         add_action('manage_page_posts_custom_column', [$this, 'column_content'], 10, 2);
     }
 
-    public function load_textdomain(): void {
-        load_plugin_textdomain('seo-control-bridge-for-divi-lite', false, dirname(plugin_basename(SCBD_LITE_FILE)) . '/languages');
+
+    public function admin_notices(): void {
+        if (!current_user_can('activate_plugins') || $this->requirements_met()) {
+            return;
+        }
+
+        $missing = [];
+        if (!$this->is_divi_active()) {
+            $missing[] = __('Divi Theme', 'seo-control-bridge-lite');
+        }
+        if (!$this->is_rank_math_active()) {
+            $missing[] = __('Rank Math SEO', 'seo-control-bridge-lite');
+        }
+
+        if (!$missing) {
+            return;
+        }
+
+        printf(
+            '<div class="notice notice-error"><p><strong>%1$s</strong> %2$s</p></div>',
+            esc_html__('SEO Control Bridge - Lite requirement missing:', 'seo-control-bridge-lite'),
+            esc_html(sprintf(
+                /* translators: %s: comma-separated missing requirements. */
+                __('This plugin requires %s. It is designed to bridge Divi Visual Builder editing with Rank Math SEO metadata controls.', 'seo-control-bridge-lite'),
+                implode(', ', $missing)
+            ))
+        );
     }
+
 
     public function register_rest_routes(): void {
         register_rest_route('scbd-lite/v1', '/post/(?P<id>\d+)/seo', [
@@ -129,7 +157,7 @@ final class Plugin {
 
     public function rest_can_edit_post(\WP_REST_Request $request): bool {
         $post_id = (int) $request['id'];
-        return $post_id > 0 && current_user_can('edit_post', $post_id);
+        return $this->can_edit_seo_post($post_id);
     }
 
     public function rest_get_seo(\WP_REST_Request $request): \WP_REST_Response {
@@ -158,10 +186,103 @@ final class Plugin {
         ]);
     }
 
+    public function ajax_get_seo(): void {
+        $post_id = $this->ajax_post_id();
+        if (!$post_id) {
+            wp_send_json_error([
+                'message' => __('Invalid post ID.', 'seo-control-bridge-lite'),
+            ], 400);
+        }
+
+        check_ajax_referer('seo_control_bridge_lite_seo_' . $post_id, 'nonce');
+
+        if (!$this->can_edit_seo_post($post_id)) {
+            wp_send_json_error([
+                'message' => __('You are not allowed to edit SEO fields for this post.', 'seo-control-bridge-lite'),
+            ], 403);
+        }
+
+        wp_send_json_success([
+            'postId' => $post_id,
+            'fields' => $this->field_schema(),
+            'values' => $this->get_seo_values($post_id),
+        ]);
+    }
+
+    public function ajax_save_seo(): void {
+        $post_id = $this->ajax_post_id();
+        if (!$post_id) {
+            wp_send_json_error([
+                'message' => __('Invalid post ID.', 'seo-control-bridge-lite'),
+            ], 400);
+        }
+
+        check_ajax_referer('seo_control_bridge_lite_seo_' . $post_id, 'nonce');
+
+        if (!$this->can_edit_seo_post($post_id)) {
+            wp_send_json_error([
+                'message' => __('You are not allowed to edit SEO fields for this post.', 'seo-control-bridge-lite'),
+            ], 403);
+        }
+
+        $posted_values = [];
+        if (isset($_POST['values']) && is_array($_POST['values'])) {
+            $posted_values = map_deep(wp_unslash($_POST['values']), 'sanitize_text_field');
+        }
+
+        $values = $this->sanitize_seo_values($posted_values);
+        $this->save_seo_values($post_id, $values);
+
+        clean_post_cache($post_id);
+
+        wp_send_json_success([
+            'postId' => $post_id,
+            'saved' => true,
+            'values' => $this->get_seo_values($post_id),
+        ]);
+    }
+
+    private function ajax_post_id(): int {
+        $post_id = filter_input(INPUT_POST, 'postId', FILTER_VALIDATE_INT);
+        if (!$post_id) {
+            $post_id = filter_input(INPUT_GET, 'postId', FILTER_VALIDATE_INT);
+        }
+
+        return $post_id ? absint($post_id) : 0;
+    }
+
+
+    private function current_editable_post_id(): int {
+        $candidates = [get_queried_object_id()];
+
+        global $post;
+        if ($post instanceof \WP_Post) {
+            $candidates[] = $post->ID;
+        }
+
+        foreach ($candidates as $candidate) {
+            $post_id = absint($candidate);
+            if ($post_id && get_post($post_id) instanceof \WP_Post) {
+                return $post_id;
+            }
+        }
+
+        return 0;
+    }
+
+    private function can_edit_seo_post(int $post_id): bool {
+        $post = get_post($post_id);
+        if (!$post instanceof \WP_Post) {
+            return false;
+        }
+
+        return current_user_can('edit_post', $post_id);
+    }
+
     public function admin_menu(): void {
         add_options_page(
-            __('SEO Bridge Lite', 'seo-control-bridge-for-divi-lite'),
-            __('SEO Bridge Lite', 'seo-control-bridge-for-divi-lite'),
+            __('SEO Bridge - Lite', 'seo-control-bridge-lite'),
+            __('SEO Bridge - Lite', 'seo-control-bridge-lite'),
             'manage_options',
             'scbd-lite',
             [$this, 'render_settings_page']
@@ -170,56 +291,67 @@ final class Plugin {
 
     public function render_settings_page(): void {
         $rank_math_active = $this->is_rank_math_active();
+        $divi_active = $this->is_divi_active();
+        $requirements_met = $this->requirements_met();
         ?>
         <div class="wrap scbd-lite-wrap">
-            <h1><?php esc_html_e('SEO Control Bridge for Divi Lite', 'seo-control-bridge-for-divi-lite'); ?></h1>
-            <p class="scbd-lite-lede"><?php esc_html_e('Getting started with fast, Divi-friendly SEO metadata editing for pages and posts.', 'seo-control-bridge-for-divi-lite'); ?></p>
+            <h1><?php esc_html_e('SEO Control Bridge - Lite', 'seo-control-bridge-lite'); ?></h1>
+            <p class="scbd-lite-lede"><?php esc_html_e('Bridge the gap between the Divi Visual Builder and Rank Math SEO by editing page-level SEO controls without leaving the builder workflow.', 'seo-control-bridge-lite'); ?></p>
 
             <div class="scbd-lite-card scbd-lite-hero-card">
                 <div>
-                    <h2><?php esc_html_e('Getting Started', 'seo-control-bridge-for-divi-lite'); ?></h2>
-                    <p><?php esc_html_e('Use this Lite plugin as a clean bridge between Divi editing workflows and Rank Math-compatible SEO metadata.', 'seo-control-bridge-for-divi-lite'); ?></p>
+                    <h2><?php esc_html_e('Getting Started', 'seo-control-bridge-lite'); ?></h2>
+                    <p><?php esc_html_e('SEO Control Bridge - Lite gives developers and site admins more control over Rank Math SEO metadata while they are working inside Divi’s visual editing experience.', 'seo-control-bridge-lite'); ?></p>
                 </div>
                 <div class="scbd-lite-hero-actions">
-                    <a class="button button-primary" href="<?php echo esc_url(admin_url('edit.php?post_type=page')); ?>"><?php esc_html_e('Open Pages', 'seo-control-bridge-for-divi-lite'); ?></a>
-                    <a class="button" href="<?php echo esc_url($this->plugin_details_url()); ?>"><?php esc_html_e('View Details', 'seo-control-bridge-for-divi-lite'); ?></a>
+                    <a class="button button-primary" href="<?php echo esc_url(admin_url('edit.php?post_type=page')); ?>"><?php esc_html_e('Open Pages', 'seo-control-bridge-lite'); ?></a>
+                    <a class="button" href="<?php echo esc_url($this->plugin_details_url()); ?>"><?php esc_html_e('View Details', 'seo-control-bridge-lite'); ?></a>
                 </div>
+            </div>
+
+
+            <div class="scbd-lite-card <?php echo $requirements_met ? 'scbd-lite-requirements-ok' : 'scbd-lite-requirements-warning'; ?>">
+                <h2><?php esc_html_e('Required Environment', 'seo-control-bridge-lite'); ?></h2>
+                <p><?php esc_html_e('This plugin is intentionally built for sites using both the Divi Theme and Rank Math SEO. It bridges those two workflows so SEO decisions can happen while the page is being visually built.', 'seo-control-bridge-lite'); ?></p>
+                <ul class="scbd-lite-requirements">
+                    <li><strong><?php esc_html_e('Divi Theme:', 'seo-control-bridge-lite'); ?></strong> <?php echo $divi_active ? esc_html__('Detected', 'seo-control-bridge-lite') : esc_html__('Required but not detected', 'seo-control-bridge-lite'); ?></li>
+                    <li><strong><?php esc_html_e('Rank Math SEO:', 'seo-control-bridge-lite'); ?></strong> <?php echo $rank_math_active ? esc_html__('Detected', 'seo-control-bridge-lite') : esc_html__('Required but not detected', 'seo-control-bridge-lite'); ?></li>
+                </ul>
             </div>
 
             <div class="scbd-lite-grid">
                 <div class="scbd-lite-card">
-                    <h2><?php esc_html_e('1. Confirm Rank Math', 'seo-control-bridge-for-divi-lite'); ?></h2>
-                    <p><strong><?php esc_html_e('Rank Math detected:', 'seo-control-bridge-for-divi-lite'); ?></strong> <?php echo $rank_math_active ? esc_html__('Yes', 'seo-control-bridge-for-divi-lite') : esc_html__('No', 'seo-control-bridge-for-divi-lite'); ?></p>
-                    <p><?php esc_html_e('Rank Math is recommended because SEO Bridge Lite saves to Rank Math-compatible meta keys. The fields still save safely if Rank Math is not active.', 'seo-control-bridge-for-divi-lite'); ?></p>
+                    <h2><?php esc_html_e('1. Confirm the required tools', 'seo-control-bridge-lite'); ?></h2>
+                    <p><?php esc_html_e('Divi Theme and Rank Math SEO are required. Divi provides the visual builder workflow; Rank Math provides the SEO output layer. SEO Control Bridge - Lite connects the two.', 'seo-control-bridge-lite'); ?></p>
                 </div>
                 <div class="scbd-lite-card">
-                    <h2><?php esc_html_e('2. Edit SEO fields', 'seo-control-bridge-for-divi-lite'); ?></h2>
-                    <p><?php esc_html_e('Open a page or post in WordPress and use the SEO Bridge Lite meta box for title, description, focus keyword, canonical URL, OpenGraph, and X/Twitter fields.', 'seo-control-bridge-for-divi-lite'); ?></p>
+                    <h2><?php esc_html_e('2. Edit SEO fields', 'seo-control-bridge-lite'); ?></h2>
+                    <p><?php esc_html_e('Open a page or post in WordPress and use the SEO Bridge - Lite meta box for title, description, focus keyword, canonical URL, OpenGraph, and X/Twitter metadata that Rank Math can output.', 'seo-control-bridge-lite'); ?></p>
                 </div>
                 <div class="scbd-lite-card">
-                    <h2><?php esc_html_e('3. Use Divi Visual Builder', 'seo-control-bridge-for-divi-lite'); ?></h2>
-                    <p><?php esc_html_e('When viewing an editable page, click the floating SEO Bridge Lite button to open the overlay without leaving the Divi Visual Builder. Drag the button anywhere in the viewport; its location is remembered for that page.', 'seo-control-bridge-for-divi-lite'); ?></p>
+                    <h2><?php esc_html_e('3. Use Divi Visual Builder', 'seo-control-bridge-lite'); ?></h2>
+                    <p><?php esc_html_e('When editing with Divi Visual Builder, click the floating SEO Bridge - Lite button to open the metadata overlay without leaving the builder. Drag the button anywhere inside the builder frame; its location is remembered for that page.', 'seo-control-bridge-lite'); ?></p>
                 </div>
                 <div class="scbd-lite-card">
-                    <h2><?php esc_html_e('4. Check SEO completion', 'seo-control-bridge-for-divi-lite'); ?></h2>
-                    <p><?php esc_html_e('Pages and posts include an SEO column showing title, description, and focus keyword completion as a 0/3 through 3/3 score.', 'seo-control-bridge-for-divi-lite'); ?></p>
+                    <h2><?php esc_html_e('4. Check SEO completion', 'seo-control-bridge-lite'); ?></h2>
+                    <p><?php esc_html_e('Pages and posts include an SEO column showing title, description, and focus keyword completion as a 0/3 through 3/3 score.', 'seo-control-bridge-lite'); ?></p>
                 </div>
             </div>
 
             <div class="scbd-lite-card">
-                <h2><?php esc_html_e('Lite Feature Set', 'seo-control-bridge-for-divi-lite'); ?></h2>
+                <h2><?php esc_html_e('Lite Feature Set', 'seo-control-bridge-lite'); ?></h2>
                 <ul class="scbd-lite-checklist">
-                    <li><?php esc_html_e('SEO title, meta description, focus keyword, and canonical URL fields.', 'seo-control-bridge-for-divi-lite'); ?></li>
-                    <li><?php esc_html_e('OpenGraph and X/Twitter title, description, and image URL fields.', 'seo-control-bridge-for-divi-lite'); ?></li>
-                    <li><?php esc_html_e('Admin list SEO status columns.', 'seo-control-bridge-for-divi-lite'); ?></li>
-                    <li><?php esc_html_e('Visual Builder overlay for editing the current page without leaving Divi.', 'seo-control-bridge-for-divi-lite'); ?></li>
-                    <li><?php esc_html_e('GitHub-powered updates through the native WordPress plugin updater.', 'seo-control-bridge-for-divi-lite'); ?></li>
+                    <li><?php esc_html_e('SEO title, meta description, focus keyword, and canonical URL fields.', 'seo-control-bridge-lite'); ?></li>
+                    <li><?php esc_html_e('OpenGraph and X/Twitter title, description, and image URL fields.', 'seo-control-bridge-lite'); ?></li>
+                    <li><?php esc_html_e('Admin list SEO status columns.', 'seo-control-bridge-lite'); ?></li>
+                    <li><?php esc_html_e('Visual Builder overlay for editing the current page’s Rank Math SEO metadata without leaving Divi.', 'seo-control-bridge-lite'); ?></li>
+                    <li><?php esc_html_e('WordPress.org-powered updates through the native WordPress plugin updater.', 'seo-control-bridge-lite'); ?></li>
                 </ul>
             </div>
             <div class="scbd-lite-card scbd-lite-pro-card">
-                <h2><?php esc_html_e('Need the Pro workflow?', 'seo-control-bridge-for-divi-lite'); ?></h2>
-                <p><?php esc_html_e('SEO Control Bridge for Divi Pro adds bulk SEO tools, schema templates, social previews, imports/exports, white-labeling, license-managed updates, and agency workflow features.', 'seo-control-bridge-for-divi-lite'); ?></p>
-                <p><a class="button button-primary" href="https://eecons.com/product/seo-control-bridge-for-divi/" target="_blank" rel="noopener noreferrer"><?php esc_html_e('View Pro Version', 'seo-control-bridge-for-divi-lite'); ?></a></p>
+                <h2><?php esc_html_e('Need the Pro workflow?', 'seo-control-bridge-lite'); ?></h2>
+                <p><?php esc_html_e('SEO Control Bridge Pro adds bulk SEO tools, schema templates, social previews, imports/exports, white-labeling, license-managed updates, and agency workflow features.', 'seo-control-bridge-lite'); ?></p>
+                <p><a class="button button-primary" href="https://eecons.com/product/seo-control-bridge-for-divi/" target="_blank" rel="noopener noreferrer"><?php esc_html_e('View Pro Version', 'seo-control-bridge-lite'); ?></a></p>
             </div>
         </div>
         <?php
@@ -229,14 +361,14 @@ final class Plugin {
         $getting_started = sprintf(
             '<a href="%1$s">%2$s</a>',
             esc_url(admin_url('options-general.php?page=scbd-lite')),
-            esc_html__('Getting Started', 'seo-control-bridge-for-divi-lite')
+            esc_html__('Getting Started', 'seo-control-bridge-lite')
         );
         array_unshift($links, $getting_started);
         return $links;
     }
 
     public function plugin_row_meta(array $links, string $file): array {
-        if (plugin_basename(SCBD_LITE_FILE) !== $file) {
+        if (plugin_basename(SEO_CONTROL_BRIDGE_LITE_FILE) !== $file) {
             return $links;
         }
 
@@ -245,8 +377,8 @@ final class Plugin {
         // duplicate View Details entries in the plugin description column.
         $links[] = sprintf(
             '<a href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a>',
-            esc_url('https://github.com/MikeWard0321/seo-control-bridge-for-divi-lite'),
-            esc_html__('GitHub', 'seo-control-bridge-for-divi-lite')
+            esc_url('https://github.com/MikeWard0321/seo-control-bridge-lite'),
+            esc_html__('GitHub', 'seo-control-bridge-lite')
         );
         return $links;
     }
@@ -258,7 +390,7 @@ final class Plugin {
     }
 
     public function activation_redirect(string $plugin): void {
-        if (plugin_basename(SCBD_LITE_FILE) === $plugin && !wp_doing_ajax() && is_admin()) {
+        if (plugin_basename(SEO_CONTROL_BRIDGE_LITE_FILE) === $plugin && !wp_doing_ajax() && is_admin()) {
             set_transient('scbd_lite_activation_redirect', '1', 45);
         }
     }
@@ -271,7 +403,9 @@ final class Plugin {
             return;
         }
         delete_transient('scbd_lite_activation_redirect');
-        if (!empty($_GET['activate-multi']) || !empty($_GET['networkwide'])) {
+        $activate_multi = filter_input(INPUT_GET, 'activate-multi', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        $networkwide = filter_input(INPUT_GET, 'networkwide', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (!empty($activate_multi) || !empty($networkwide)) {
             return;
         }
         wp_safe_redirect(admin_url('options-general.php?page=scbd-lite'));
@@ -279,14 +413,17 @@ final class Plugin {
     }
 
     private function plugin_details_url(): string {
-        return self_admin_url('plugin-install.php?tab=plugin-information&plugin=seo-control-bridge-for-divi-lite&TB_iframe=true&width=772&height=820');
+        return self_admin_url('plugin-install.php?tab=plugin-information&plugin=seo-control-bridge-lite&TB_iframe=true&width=772&height=820');
     }
 
     public function add_meta_boxes(): void {
+        if (!$this->requirements_met()) {
+            return;
+        }
         foreach (['post', 'page'] as $screen) {
             add_meta_box(
                 'scbd_lite_seo_fields',
-                __('SEO Bridge Lite', 'seo-control-bridge-for-divi-lite'),
+                __('SEO Bridge - Lite', 'seo-control-bridge-lite'),
                 [$this, 'render_meta_box'],
                 $screen,
                 'normal',
@@ -298,7 +435,7 @@ final class Plugin {
     public function render_meta_box(\WP_Post $post): void {
         wp_nonce_field('scbd_lite_save_meta', 'scbd_lite_nonce');
         echo '<div class="scbd-lite-meta-box">';
-        echo '<p class="description">' . esc_html__('These fields map to Rank Math metadata when Rank Math is active. They remain stored safely even when Rank Math is not active.', 'seo-control-bridge-for-divi-lite') . '</p>';
+        echo '<p class="description">' . esc_html__('These fields map to Rank Math SEO metadata. Divi Theme and Rank Math SEO are required for the intended bridge workflow.', 'seo-control-bridge-lite') . '</p>';
         foreach ($this->fields as $key => $field) {
             $value = $this->get_seo_value($post->ID, $key);
             printf('<p class="scbd-lite-field scbd-lite-field-%1$s"><label for="scbd_lite_%1$s"><strong>%2$s</strong></label>', esc_attr($key), esc_html($field['label']));
@@ -313,7 +450,8 @@ final class Plugin {
     }
 
     public function save_post(int $post_id, \WP_Post $post): void {
-        if (!isset($_POST['scbd_lite_nonce']) || !wp_verify_nonce(sanitize_text_field(wp_unslash($_POST['scbd_lite_nonce'])), 'scbd_lite_save_meta')) {
+        $nonce = filter_input(INPUT_POST, 'scbd_lite_nonce', FILTER_SANITIZE_FULL_SPECIAL_CHARS);
+        if (!$nonce || !wp_verify_nonce($nonce, 'scbd_lite_save_meta')) {
             return;
         }
         if (defined('DOING_AUTOSAVE') && DOING_AUTOSAVE) {
@@ -322,55 +460,66 @@ final class Plugin {
         if (!current_user_can('edit_post', $post_id)) {
             return;
         }
-        if (!isset($_POST['scbd_lite']) || !is_array($_POST['scbd_lite'])) {
+
+        $posted = filter_input(INPUT_POST, 'scbd_lite', FILTER_DEFAULT, FILTER_REQUIRE_ARRAY);
+        if (!is_array($posted)) {
             return;
         }
 
-        $posted = wp_unslash($_POST['scbd_lite']);
-        $this->save_seo_values($post_id, is_array($posted) ? $posted : []);
+        $posted = map_deep($posted, 'sanitize_textarea_field');
+        $values = $this->sanitize_seo_values($posted);
+        $this->save_seo_values($post_id, $values);
     }
 
     public function admin_assets(string $hook): void {
-        wp_enqueue_style('scbd-lite-admin', SCBD_LITE_URL . 'assets/css/admin.css', [], SCBD_LITE_VERSION);
-        wp_enqueue_script('scbd-lite-admin', SCBD_LITE_URL . 'assets/js/admin.js', [], SCBD_LITE_VERSION, true);
+        wp_enqueue_style('scbd-lite-admin', SEO_CONTROL_BRIDGE_LITE_URL . 'assets/css/admin.css', [], SEO_CONTROL_BRIDGE_LITE_VERSION);
+        wp_enqueue_script('scbd-lite-admin', SEO_CONTROL_BRIDGE_LITE_URL . 'assets/js/admin.js', [], SEO_CONTROL_BRIDGE_LITE_VERSION, true);
     }
 
     public function frontend_assets(): void {
+        if (!$this->requirements_met()) {
+            return;
+        }
         if (!is_user_logged_in()) {
             return;
         }
 
-        $post_id = get_queried_object_id();
+        $post_id = $this->current_editable_post_id();
         if (!$post_id || !current_user_can('edit_post', $post_id)) {
             return;
         }
 
-        wp_enqueue_style('scbd-lite-builder', SCBD_LITE_URL . 'assets/css/builder.css', [], SCBD_LITE_VERSION);
-        wp_enqueue_script('scbd-lite-builder', SCBD_LITE_URL . 'assets/js/builder.js', [], SCBD_LITE_VERSION, true);
-        wp_localize_script('scbd-lite-builder', 'SCBDLiteBuilder', [
+        wp_enqueue_style('scbd-lite-builder', SEO_CONTROL_BRIDGE_LITE_URL . 'assets/css/builder.css', [], SEO_CONTROL_BRIDGE_LITE_VERSION);
+        wp_enqueue_script('scbd-lite-builder', SEO_CONTROL_BRIDGE_LITE_URL . 'assets/js/builder.js', [], SEO_CONTROL_BRIDGE_LITE_VERSION, true);
+        wp_localize_script('scbd-lite-builder', 'seoControlBridgeLiteBuilder', [
             'postId' => $post_id,
             'restUrl' => esc_url_raw(rest_url('scbd-lite/v1/post/' . $post_id . '/seo')),
             'nonce' => wp_create_nonce('wp_rest'),
+            'ajaxUrl' => esc_url_raw(admin_url('admin-ajax.php')),
+            'ajaxNonce' => wp_create_nonce('seo_control_bridge_lite_seo_' . $post_id),
             'adminUrl' => esc_url_raw(admin_url('options-general.php?page=scbd-lite')),
             'strings' => [
-                'button' => __('SEO Bridge Lite', 'seo-control-bridge-for-divi-lite'),
-                'title' => __('SEO Bridge Lite', 'seo-control-bridge-for-divi-lite'),
-                'description' => __('Edit SEO metadata for this page without leaving the Divi Visual Builder.', 'seo-control-bridge-for-divi-lite'),
-                'loading' => __('Loading SEO fields…', 'seo-control-bridge-for-divi-lite'),
-                'save' => __('Save SEO Fields', 'seo-control-bridge-for-divi-lite'),
-                'saving' => __('Saving…', 'seo-control-bridge-for-divi-lite'),
-                'saved' => __('Saved.', 'seo-control-bridge-for-divi-lite'),
-                'error' => __('Unable to load or save SEO fields. Please refresh and try again.', 'seo-control-bridge-for-divi-lite'),
-                'close' => __('Close', 'seo-control-bridge-for-divi-lite'),
+                'button' => __('SEO Bridge - Lite', 'seo-control-bridge-lite'),
+                'title' => __('SEO Bridge - Lite', 'seo-control-bridge-lite'),
+                'description' => __('Edit SEO metadata for this page without leaving the Divi Visual Builder.', 'seo-control-bridge-lite'),
+                'loading' => __('Loading SEO fields…', 'seo-control-bridge-lite'),
+                'save' => __('Save SEO Fields', 'seo-control-bridge-lite'),
+                'saving' => __('Saving…', 'seo-control-bridge-lite'),
+                'saved' => __('Saved.', 'seo-control-bridge-lite'),
+                'error' => __('Unable to load or save SEO fields. Please refresh and try again.', 'seo-control-bridge-lite'),
+                'close' => __('Close', 'seo-control-bridge-lite'),
             ],
         ]);
     }
 
     public function admin_bar_link(\WP_Admin_Bar $bar): void {
+        if (!$this->requirements_met()) {
+            return;
+        }
         if (!is_admin_bar_showing() || !is_user_logged_in()) {
             return;
         }
-        $object_id = get_queried_object_id();
+        $object_id = $this->current_editable_post_id();
         if ($object_id && current_user_can('edit_post', $object_id)) {
             $href = '#scbd-lite-open';
         } else {
@@ -378,14 +527,14 @@ final class Plugin {
         }
         $bar->add_node([
             'id' => 'scbd-lite',
-            'title' => __('SEO Bridge Lite', 'seo-control-bridge-for-divi-lite'),
+            'title' => __('SEO Bridge - Lite', 'seo-control-bridge-lite'),
             'href' => $href,
             'meta' => ['class' => 'scbd-lite-admin-bar'],
         ]);
     }
 
     public function columns(array $columns): array {
-        $columns['scbd_lite_seo'] = __('SEO', 'seo-control-bridge-for-divi-lite');
+        $columns['scbd_lite_seo'] = __('SEO', 'seo-control-bridge-lite');
         return $columns;
     }
 
@@ -463,7 +612,34 @@ final class Plugin {
         return '_scbd_lite_' . $key;
     }
 
+    private function requirements_met(): bool {
+        return $this->is_divi_active() && $this->is_rank_math_active();
+    }
+
+    private function is_divi_active(): bool {
+        if (!function_exists('wp_get_theme')) {
+            return false;
+        }
+
+        $theme = wp_get_theme();
+        $template = strtolower((string) $theme->get_template());
+        $stylesheet = strtolower((string) $theme->get_stylesheet());
+        $name = strtolower((string) $theme->get('Name'));
+
+        return 'divi' === $template || 'divi' === $stylesheet || false !== strpos($name, 'divi');
+    }
+
     private function is_rank_math_active(): bool {
-        return defined('RANK_MATH_VERSION') || class_exists('RankMath');
+        if (defined('RANK_MATH_VERSION') || class_exists('RankMath')) {
+            return true;
+        }
+
+        $active_plugins = (array) get_option('active_plugins', []);
+        if (is_multisite()) {
+            $network_plugins = array_keys((array) get_site_option('active_sitewide_plugins', []));
+            $active_plugins = array_merge($active_plugins, $network_plugins);
+        }
+
+        return in_array('seo-by-rank-math/rank-math.php', $active_plugins, true);
     }
 }
