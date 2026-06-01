@@ -3,7 +3,7 @@
  * Plugin Name: SEO Control Bridge - Lite
  * Plugin URI: https://eecons.com/seo-control-bridge-lite/
  * Description: Bridge Divi Visual Builder workflows with Rank Math SEO controls for metadata, social fields, and canonical URLs.
- * Version: 1.1.1
+ * Version: 1.1.2
  * Requires at least: 6.5
  * Requires PHP: 8.0
  * Requires Plugins: seo-by-rank-math
@@ -17,12 +17,12 @@
 
 defined('ABSPATH') || exit;
 
-define('SCBD_LITE_VERSION', '1.1.1');
-define('SCBD_LITE_FILE', __FILE__);
-define('SCBD_LITE_DIR', plugin_dir_path(__FILE__));
-define('SCBD_LITE_URL', plugin_dir_url(__FILE__));
+define('SEO_CONTROL_BRIDGE_LITE_VERSION', '1.1.2');
+define('SEO_CONTROL_BRIDGE_LITE_FILE', __FILE__);
+define('SEO_CONTROL_BRIDGE_LITE_DIR', plugin_dir_path(__FILE__));
+define('SEO_CONTROL_BRIDGE_LITE_URL', plugin_dir_url(__FILE__));
 
-require_once SCBD_LITE_DIR . 'includes/class-scbd-lite.php';
+require_once SEO_CONTROL_BRIDGE_LITE_DIR . 'includes/class-scbd-lite.php';
 add_action('plugins_loaded', static function () {
-    \SCBD_Lite\Plugin::instance();
+    \SEO_Control_Bridge_Lite\Plugin::instance();
 });

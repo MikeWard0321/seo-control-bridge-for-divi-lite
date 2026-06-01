@@ -1,11 +1,11 @@
 === SEO Control Bridge - Lite ===
-Contributors: eecons
+Contributors: mikeward0321
 Tags: seo, divi, rank math, metadata, visual builder
 Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
 Requires Plugins: seo-by-rank-math
-Stable tag: 1.1.1
+Stable tag: 1.1.2
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -94,7 +94,7 @@ Yes. The settings screen includes a Pro upgrade link for users who need bulk SEO
 
 == Changelog ==
 
-= 1.1.1 =
+= 1.1.2 =
 * Prevented duplicate Visual Builder launch buttons by suppressing the parent Divi Builder shell launcher.
 * Removed manual translation loading for WordPress.org-hosted translation compatibility.
 * Removed the unused Domain Path header.

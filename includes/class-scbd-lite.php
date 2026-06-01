@@ -1,5 +1,5 @@
 <?php
-namespace SCBD_Lite;
+namespace SEO_Control_Bridge_Lite;
 
 defined('ABSPATH') || exit;
 
@@ -85,7 +85,7 @@ final class Plugin {
         add_action('admin_enqueue_scripts', [$this, 'admin_assets']);
         add_action('wp_enqueue_scripts', [$this, 'frontend_assets']);
         add_action('admin_bar_menu', [$this, 'admin_bar_link'], 90);
-        add_filter('plugin_action_links_' . plugin_basename(SCBD_LITE_FILE), [$this, 'plugin_action_links']);
+        add_filter('plugin_action_links_' . plugin_basename(SEO_CONTROL_BRIDGE_LITE_FILE), [$this, 'plugin_action_links']);
         add_filter('plugin_row_meta', [$this, 'plugin_row_meta'], 10, 2);
         add_action('admin_enqueue_scripts', [$this, 'plugin_details_assets']);
         add_action('activated_plugin', [$this, 'activation_redirect']);
@@ -273,7 +273,7 @@ final class Plugin {
     }
 
     public function plugin_row_meta(array $links, string $file): array {
-        if (plugin_basename(SCBD_LITE_FILE) !== $file) {
+        if (plugin_basename(SEO_CONTROL_BRIDGE_LITE_FILE) !== $file) {
             return $links;
         }
 
@@ -295,7 +295,7 @@ final class Plugin {
     }
 
     public function activation_redirect(string $plugin): void {
-        if (plugin_basename(SCBD_LITE_FILE) === $plugin && !wp_doing_ajax() && is_admin()) {
+        if (plugin_basename(SEO_CONTROL_BRIDGE_LITE_FILE) === $plugin && !wp_doing_ajax() && is_admin()) {
             set_transient('scbd_lite_activation_redirect', '1', 45);
         }
     }
@@ -377,8 +377,8 @@ final class Plugin {
     }
 
     public function admin_assets(string $hook): void {
-        wp_enqueue_style('scbd-lite-admin', SCBD_LITE_URL . 'assets/css/admin.css', [], SCBD_LITE_VERSION);
-        wp_enqueue_script('scbd-lite-admin', SCBD_LITE_URL . 'assets/js/admin.js', [], SCBD_LITE_VERSION, true);
+        wp_enqueue_style('scbd-lite-admin', SEO_CONTROL_BRIDGE_LITE_URL . 'assets/css/admin.css', [], SEO_CONTROL_BRIDGE_LITE_VERSION);
+        wp_enqueue_script('scbd-lite-admin', SEO_CONTROL_BRIDGE_LITE_URL . 'assets/js/admin.js', [], SEO_CONTROL_BRIDGE_LITE_VERSION, true);
     }
 
     public function frontend_assets(): void {
@@ -394,9 +394,9 @@ final class Plugin {
             return;
         }
 
-        wp_enqueue_style('scbd-lite-builder', SCBD_LITE_URL . 'assets/css/builder.css', [], SCBD_LITE_VERSION);
-        wp_enqueue_script('scbd-lite-builder', SCBD_LITE_URL . 'assets/js/builder.js', [], SCBD_LITE_VERSION, true);
-        wp_localize_script('scbd-lite-builder', 'SCBDLiteBuilder', [
+        wp_enqueue_style('scbd-lite-builder', SEO_CONTROL_BRIDGE_LITE_URL . 'assets/css/builder.css', [], SEO_CONTROL_BRIDGE_LITE_VERSION);
+        wp_enqueue_script('scbd-lite-builder', SEO_CONTROL_BRIDGE_LITE_URL . 'assets/js/builder.js', [], SEO_CONTROL_BRIDGE_LITE_VERSION, true);
+        wp_localize_script('scbd-lite-builder', 'seoControlBridgeLiteBuilder', [
             'postId' => $post_id,
             'restUrl' => esc_url_raw(rest_url('scbd-lite/v1/post/' . $post_id . '/seo')),
             'nonce' => wp_create_nonce('wp_rest'),

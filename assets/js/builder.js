@@ -1,12 +1,12 @@
 (function () {
   'use strict';
 
-  var config = window.SCBDLiteBuilder || null;
+  var config = window.seoControlBridgeLiteBuilder || null;
   if (!config || !config.postId || !config.restUrl || !config.nonce) {
     return;
   }
 
-  var STORAGE_KEY = 'scbdLiteLauncherPosition:' + config.postId;
+  var STORAGE_KEY = 'seoControlBridgeLiteLauncherPosition:' + config.postId;
   var DRAG_THRESHOLD = 6;
   var DEFAULT_MARGIN = 18;
   var modal = null;
@@ -75,7 +75,7 @@
     restoreLauncherPosition();
     bindLauncherEvents();
     bindAdminBarLink();
-    window.SCBDLiteOpen = openModal;
+    window.seoControlBridgeLiteOpen = openModal;
   }
 
   function bindLauncherEvents() {
