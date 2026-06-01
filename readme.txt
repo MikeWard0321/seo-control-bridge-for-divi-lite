@@ -5,7 +5,7 @@ Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
 Requires Plugins: seo-by-rank-math
-Stable tag: 1.1.6
+Stable tag: 1.1.7
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -94,7 +94,7 @@ Yes. The settings screen includes a Pro upgrade link for users who need bulk SEO
 
 == Changelog ==
 
-= 1.1.6 =
+= 1.1.7 =
 * Normalized Divi Visual Builder preview post IDs so SEO fields load and save against the real positive WordPress post ID.
 
 = 1.1.4 =

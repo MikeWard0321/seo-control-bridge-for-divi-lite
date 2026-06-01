@@ -227,7 +227,7 @@ final class Plugin {
 
         $posted_values = [];
         if (isset($_POST['values']) && is_array($_POST['values'])) {
-            $posted_values = wp_unslash($_POST['values']);
+            $posted_values = map_deep(wp_unslash($_POST['values']), 'sanitize_text_field');
         }
 
         $values = $this->sanitize_seo_values($posted_values);
