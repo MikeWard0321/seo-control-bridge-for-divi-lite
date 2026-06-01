@@ -5,7 +5,7 @@ Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
 Requires Plugins: seo-by-rank-math
-Stable tag: 1.1.2
+Stable tag: 1.1.6
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,12 @@ Yes. The settings screen includes a Pro upgrade link for users who need bulk SEO
 4. SEO completion column for pages and posts.
 
 == Changelog ==
+
+= 1.1.6 =
+* Normalized Divi Visual Builder preview post IDs so SEO fields load and save against the real positive WordPress post ID.
+
+= 1.1.4 =
+* Fixed Visual Builder SEO field saving by moving builder overlay load/save requests to a nonce-protected WordPress AJAX endpoint.
 
 = 1.1.2 =
 * Prevented duplicate Visual Builder launch buttons by suppressing the parent Divi Builder shell launcher.

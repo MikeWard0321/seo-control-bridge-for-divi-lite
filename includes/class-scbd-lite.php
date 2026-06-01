@@ -78,6 +78,8 @@ final class Plugin {
 
     private function __construct() {
         add_action('rest_api_init', [$this, 'register_rest_routes']);
+        add_action('wp_ajax_seo_control_bridge_lite_get_seo', [$this, 'ajax_get_seo']);
+        add_action('wp_ajax_seo_control_bridge_lite_save_seo', [$this, 'ajax_save_seo']);
         add_action('admin_menu', [$this, 'admin_menu']);
         add_action('admin_notices', [$this, 'admin_notices']);
         add_action('add_meta_boxes', [$this, 'add_meta_boxes']);
@@ -155,7 +157,7 @@ final class Plugin {
 
     public function rest_can_edit_post(\WP_REST_Request $request): bool {
         $post_id = (int) $request['id'];
-        return $post_id > 0 && current_user_can('edit_post', $post_id) && $this->requirements_met();
+        return $this->can_edit_seo_post($post_id);
     }
 
     public function rest_get_seo(\WP_REST_Request $request): \WP_REST_Response {
@@ -182,6 +184,99 @@ final class Plugin {
             'saved' => true,
             'values' => $this->get_seo_values($post_id),
         ]);
+    }
+
+    public function ajax_get_seo(): void {
+        $post_id = $this->ajax_post_id();
+        if (!$post_id) {
+            wp_send_json_error([
+                'message' => __('Invalid post ID.', 'seo-control-bridge-lite'),
+            ], 400);
+        }
+
+        check_ajax_referer('seo_control_bridge_lite_seo_' . $post_id, 'nonce');
+
+        if (!$this->can_edit_seo_post($post_id)) {
+            wp_send_json_error([
+                'message' => __('You are not allowed to edit SEO fields for this post.', 'seo-control-bridge-lite'),
+            ], 403);
+        }
+
+        wp_send_json_success([
+            'postId' => $post_id,
+            'fields' => $this->field_schema(),
+            'values' => $this->get_seo_values($post_id),
+        ]);
+    }
+
+    public function ajax_save_seo(): void {
+        $post_id = $this->ajax_post_id();
+        if (!$post_id) {
+            wp_send_json_error([
+                'message' => __('Invalid post ID.', 'seo-control-bridge-lite'),
+            ], 400);
+        }
+
+        check_ajax_referer('seo_control_bridge_lite_seo_' . $post_id, 'nonce');
+
+        if (!$this->can_edit_seo_post($post_id)) {
+            wp_send_json_error([
+                'message' => __('You are not allowed to edit SEO fields for this post.', 'seo-control-bridge-lite'),
+            ], 403);
+        }
+
+        $posted_values = [];
+        if (isset($_POST['values']) && is_array($_POST['values'])) {
+            $posted_values = wp_unslash($_POST['values']);
+        }
+
+        $values = $this->sanitize_seo_values($posted_values);
+        $this->save_seo_values($post_id, $values);
+
+        clean_post_cache($post_id);
+
+        wp_send_json_success([
+            'postId' => $post_id,
+            'saved' => true,
+            'values' => $this->get_seo_values($post_id),
+        ]);
+    }
+
+    private function ajax_post_id(): int {
+        $post_id = filter_input(INPUT_POST, 'postId', FILTER_VALIDATE_INT);
+        if (!$post_id) {
+            $post_id = filter_input(INPUT_GET, 'postId', FILTER_VALIDATE_INT);
+        }
+
+        return $post_id ? absint($post_id) : 0;
+    }
+
+
+    private function current_editable_post_id(): int {
+        $candidates = [get_queried_object_id()];
+
+        global $post;
+        if ($post instanceof \WP_Post) {
+            $candidates[] = $post->ID;
+        }
+
+        foreach ($candidates as $candidate) {
+            $post_id = absint($candidate);
+            if ($post_id && get_post($post_id) instanceof \WP_Post) {
+                return $post_id;
+            }
+        }
+
+        return 0;
+    }
+
+    private function can_edit_seo_post(int $post_id): bool {
+        $post = get_post($post_id);
+        if (!$post instanceof \WP_Post) {
+            return false;
+        }
+
+        return current_user_can('edit_post', $post_id);
     }
 
     public function admin_menu(): void {
@@ -389,7 +484,7 @@ final class Plugin {
             return;
         }
 
-        $post_id = get_queried_object_id();
+        $post_id = $this->current_editable_post_id();
         if (!$post_id || !current_user_can('edit_post', $post_id)) {
             return;
         }
@@ -400,6 +495,8 @@ final class Plugin {
             'postId' => $post_id,
             'restUrl' => esc_url_raw(rest_url('scbd-lite/v1/post/' . $post_id . '/seo')),
             'nonce' => wp_create_nonce('wp_rest'),
+            'ajaxUrl' => esc_url_raw(admin_url('admin-ajax.php')),
+            'ajaxNonce' => wp_create_nonce('seo_control_bridge_lite_seo_' . $post_id),
             'adminUrl' => esc_url_raw(admin_url('options-general.php?page=scbd-lite')),
             'strings' => [
                 'button' => __('SEO Bridge - Lite', 'seo-control-bridge-lite'),
@@ -422,7 +519,7 @@ final class Plugin {
         if (!is_admin_bar_showing() || !is_user_logged_in()) {
             return;
         }
-        $object_id = get_queried_object_id();
+        $object_id = $this->current_editable_post_id();
         if ($object_id && current_user_can('edit_post', $object_id)) {
             $href = '#scbd-lite-open';
         } else {

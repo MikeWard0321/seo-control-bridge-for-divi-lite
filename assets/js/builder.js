@@ -2,7 +2,7 @@
   'use strict';
 
   var config = window.seoControlBridgeLiteBuilder || null;
-  if (!config || !config.postId || !config.restUrl || !config.nonce) {
+  if (!config || !config.postId) {
     return;
   }
 
@@ -16,6 +16,7 @@
   var loaded = false;
   var activeFields = [];
   var pointerState = null;
+  var saveInProgress = false;
 
   function isDiviBuilderParentShell() {
     if (window.self !== window.top) {
@@ -251,18 +252,18 @@
           '</div>' +
           '<button type="button" class="scbd-lite-modal-close" aria-label="' + escapeHtml(text('close')) + '" data-scbd-lite-close>×</button>' +
         '</div>' +
-        '<form class="scbd-lite-modal-form">' +
+        '<div class="scbd-lite-modal-form">' +
           '<div class="scbd-lite-modal-fields"><p class="scbd-lite-loading">' + escapeHtml(text('loading')) + '</p></div>' +
           '<div class="scbd-lite-modal-footer">' +
             '<span class="scbd-lite-modal-status" aria-live="polite"></span>' +
             '<button type="button" class="scbd-lite-secondary" data-scbd-lite-close>' + escapeHtml(text('close')) + '</button>' +
-            '<button type="submit" class="scbd-lite-primary">' + escapeHtml(text('save')) + '</button>' +
+            '<button type="button" class="scbd-lite-primary" data-seo-control-bridge-lite-save>' + escapeHtml(text('save')) + '</button>' +
           '</div>' +
-        '</form>' +
+        '</div>' +
       '</div>';
 
     document.body.appendChild(modal);
-    form = modal.querySelector('form');
+    form = modal.querySelector('.scbd-lite-modal-form');
     status = modal.querySelector('.scbd-lite-modal-status');
 
     modal.addEventListener('click', function (event) {
@@ -277,7 +278,10 @@
       }
     });
 
-    form.addEventListener('submit', saveValues);
+    var saveButton = modal.querySelector('[data-seo-control-bridge-lite-save]');
+    if (saveButton) {
+      saveButton.addEventListener('click', saveValues);
+    }
   }
 
   function openModal() {
@@ -314,11 +318,15 @@
   }
 
   function saveValues(event) {
-    event.preventDefault();
-    if (!form) return;
+    if (event && typeof event.preventDefault === 'function') {
+      event.preventDefault();
+      event.stopPropagation();
+    }
+    if (!form || saveInProgress) return;
 
-    var submit = form.querySelector('button[type="submit"]');
+    var submit = modal ? modal.querySelector('[data-seo-control-bridge-lite-save]') : null;
     var values = collectValues();
+    saveInProgress = true;
     setStatus(text('saving'));
     if (submit) submit.disabled = true;
 
@@ -327,15 +335,70 @@
         renderFields(activeFields, data.values || values);
         setStatus(text('saved'));
       })
-      .catch(function () {
+      .catch(function (error) {
+        if (window.console && window.console.error) {
+          window.console.error('SEO Control Bridge Lite save failed:', error);
+        }
         setStatus(text('error'));
       })
       .then(function () {
+        saveInProgress = false;
         if (submit) submit.disabled = false;
       });
   }
 
   function request(method, body) {
+    if (config.ajaxUrl && config.ajaxNonce) {
+      return ajaxRequest(method, body);
+    }
+
+    return restRequest(method, body);
+  }
+
+  function ajaxRequest(method, body) {
+    var params = new window.URLSearchParams();
+    params.append('action', method === 'POST' ? 'seo_control_bridge_lite_save_seo' : 'seo_control_bridge_lite_get_seo');
+    params.append('nonce', config.ajaxNonce);
+    params.append('postId', String(config.postId));
+
+    if (body && body.values) {
+      Object.keys(body.values).forEach(function (key) {
+        params.append('values[' + key + ']', body.values[key]);
+      });
+    }
+
+    return window.fetch(config.ajaxUrl, {
+      method: 'POST',
+      credentials: 'same-origin',
+      headers: {
+        'Content-Type': 'application/x-www-form-urlencoded; charset=UTF-8'
+      },
+      body: params.toString()
+    }).then(function (response) {
+      return response.text().then(function (textResponse) {
+        var payload = null;
+        try {
+          payload = textResponse ? JSON.parse(textResponse) : null;
+        } catch (error) {
+          payload = null;
+        }
+        if (!response.ok) {
+          throw new Error('AJAX HTTP ' + response.status + ': ' + textResponse);
+        }
+        if (!payload || !payload.success) {
+          var message = payload && payload.data && payload.data.message ? payload.data.message : textResponse;
+          throw new Error('AJAX error: ' + message);
+        }
+        return payload.data || {};
+      });
+    });
+  }
+
+  function restRequest(method, body) {
+    if (!config.restUrl || !config.nonce) {
+      return Promise.reject(new Error('SEO Control Bridge Lite request configuration is incomplete.'));
+    }
+
     var options = {
       method: method,
       credentials: 'same-origin',
@@ -350,10 +413,18 @@
     }
 
     return window.fetch(config.restUrl, options).then(function (response) {
-      if (!response.ok) {
-        throw new Error('SCBD Lite REST request failed with HTTP ' + response.status);
-      }
-      return response.json();
+      return response.text().then(function (textResponse) {
+        var payload = null;
+        try {
+          payload = textResponse ? JSON.parse(textResponse) : null;
+        } catch (error) {
+          payload = null;
+        }
+        if (!response.ok) {
+          throw new Error('REST HTTP ' + response.status + ': ' + textResponse);
+        }
+        return payload || {};
+      });
     });
   }
 
