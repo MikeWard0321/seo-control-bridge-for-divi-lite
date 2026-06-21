@@ -1,4 +1,4 @@
-.scbd-lite-floating-launcher {
+.seo-control-bridge-lite-floating-launcher {
   position: fixed;
   left: auto;
   top: auto;
@@ -20,36 +20,36 @@
   -webkit-user-select: none;
   transition: transform 140ms ease, box-shadow 140ms ease, opacity 140ms ease;
 }
-.scbd-lite-floating-launcher:hover,
-.scbd-lite-floating-launcher:focus {
+.seo-control-bridge-lite-floating-launcher:hover,
+.seo-control-bridge-lite-floating-launcher:focus {
   color: #fff;
   transform: translateY(-1px);
   box-shadow: 0 18px 36px rgba(0,0,0,.24);
   outline: none;
 }
-.scbd-lite-floating-launcher:focus-visible {
+.seo-control-bridge-lite-floating-launcher:focus-visible {
   box-shadow: 0 0 0 3px rgba(34,113,177,.35), 0 18px 36px rgba(0,0,0,.24);
 }
-.scbd-lite-floating-launcher.is-dragging {
+.seo-control-bridge-lite-floating-launcher.is-dragging {
   cursor: grabbing;
   transform: scale(1.02);
   opacity: .95;
 }
-.scbd-lite-modal-open { overflow: hidden; }
-.scbd-lite-modal[hidden] { display: none; }
-.scbd-lite-modal {
+.seo-control-bridge-lite-modal-open { overflow: hidden; }
+.seo-control-bridge-lite-modal[hidden] { display: none; }
+.seo-control-bridge-lite-modal {
   position: fixed;
   inset: 0;
   z-index: 2147483600;
   font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI", sans-serif;
 }
-.scbd-lite-modal-backdrop {
+.seo-control-bridge-lite-modal-backdrop {
   position: absolute;
   inset: 0;
   background: rgba(10, 22, 40, .62);
   backdrop-filter: blur(3px);
 }
-.scbd-lite-modal-panel {
+.seo-control-bridge-lite-modal-panel {
   position: absolute;
   right: 24px;
   top: 74px;
@@ -64,16 +64,16 @@
   overflow: hidden;
   outline: none;
 }
-.scbd-lite-modal-header {
+.seo-control-bridge-lite-modal-header {
   display: flex;
   justify-content: space-between;
   gap: 18px;
   padding: 22px 24px 18px;
   border-bottom: 1px solid #e5e7eb;
 }
-.scbd-lite-modal-header h2 { margin: 0 0 4px; font-size: 22px; line-height: 1.2; }
-.scbd-lite-modal-header p { margin: 0; color: #4b5563; font-size: 13px; }
-.scbd-lite-modal-close {
+.seo-control-bridge-lite-modal-header h2 { margin: 0 0 4px; font-size: 22px; line-height: 1.2; }
+.seo-control-bridge-lite-modal-header p { margin: 0; color: #4b5563; font-size: 13px; }
+.seo-control-bridge-lite-modal-close {
   appearance: none;
   border: 0;
   background: #f3f4f6;
@@ -85,18 +85,18 @@
   line-height: 1;
   cursor: pointer;
 }
-.scbd-lite-modal-form { display: flex; flex-direction: column; min-height: 0; flex: 1; }
-.scbd-lite-modal-fields {
+.seo-control-bridge-lite-modal-form { display: flex; flex-direction: column; min-height: 0; flex: 1; }
+.seo-control-bridge-lite-modal-fields {
   padding: 20px 24px;
   overflow: auto;
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
   gap: 16px;
 }
-.scbd-lite-modal-field { display: block; margin: 0; }
-.scbd-lite-modal-field span { display: block; margin-bottom: 6px; color: #111827; font-size: 13px; font-weight: 800; }
-.scbd-lite-modal-field input,
-.scbd-lite-modal-field textarea {
+.seo-control-bridge-lite-modal-field { display: block; margin: 0; }
+.seo-control-bridge-lite-modal-field span { display: block; margin-bottom: 6px; color: #111827; font-size: 13px; font-weight: 800; }
+.seo-control-bridge-lite-modal-field input,
+.seo-control-bridge-lite-modal-field textarea {
   box-sizing: border-box;
   width: 100%;
   border: 1px solid #d1d5db;
@@ -106,16 +106,16 @@
   color: #111827;
   background: #fff;
 }
-.scbd-lite-modal-field input:focus,
-.scbd-lite-modal-field textarea:focus { border-color: #2271b1; box-shadow: 0 0 0 3px rgba(34,113,177,.16); outline: none; }
-.scbd-lite-modal-field-description,
-.scbd-lite-modal-field-facebook_description,
-.scbd-lite-modal-field-twitter_description { grid-column: 1 / -1; }
-.scbd-lite-modal-counter { display: block; margin-top: 5px; color: #6b7280; }
-.scbd-lite-loading,
-.scbd-lite-error { grid-column: 1 / -1; margin: 0; }
-.scbd-lite-error { color: #b42318; }
-.scbd-lite-modal-footer {
+.seo-control-bridge-lite-modal-field input:focus,
+.seo-control-bridge-lite-modal-field textarea:focus { border-color: #2271b1; box-shadow: 0 0 0 3px rgba(34,113,177,.16); outline: none; }
+.seo-control-bridge-lite-modal-field-description,
+.seo-control-bridge-lite-modal-field-facebook_description,
+.seo-control-bridge-lite-modal-field-twitter_description { grid-column: 1 / -1; }
+.seo-control-bridge-lite-modal-counter { display: block; margin-top: 5px; color: #6b7280; }
+.seo-control-bridge-lite-loading,
+.seo-control-bridge-lite-error { grid-column: 1 / -1; margin: 0; }
+.seo-control-bridge-lite-error { color: #b42318; }
+.seo-control-bridge-lite-modal-footer {
   display: flex;
   align-items: center;
   justify-content: flex-end;
@@ -124,13 +124,13 @@
   border-top: 1px solid #e5e7eb;
   background: #f9fafb;
 }
-.scbd-lite-modal-status { margin-right: auto; color: #2271b1; font-weight: 700; font-size: 13px; }
-.scbd-lite-primary,
-.scbd-lite-secondary { appearance: none; border-radius: 999px; padding: 10px 16px; font-weight: 800; cursor: pointer; }
-.scbd-lite-primary { border: 0; background: #2271b1; color: #fff; }
-.scbd-lite-primary:disabled { opacity: .65; cursor: progress; }
-.scbd-lite-secondary { border: 1px solid #d1d5db; background: #fff; color: #111827; }
+.seo-control-bridge-lite-modal-status { margin-right: auto; color: #2271b1; font-weight: 700; font-size: 13px; }
+.seo-control-bridge-lite-primary,
+.seo-control-bridge-lite-secondary { appearance: none; border-radius: 999px; padding: 10px 16px; font-weight: 800; cursor: pointer; }
+.seo-control-bridge-lite-primary { border: 0; background: #2271b1; color: #fff; }
+.seo-control-bridge-lite-primary:disabled { opacity: .65; cursor: progress; }
+.seo-control-bridge-lite-secondary { border: 1px solid #d1d5db; background: #fff; color: #111827; }
 @media (max-width: 782px) {
-  .scbd-lite-modal-panel { inset: 14px; width: auto; }
-  .scbd-lite-modal-fields { grid-template-columns: 1fr; }
+  .seo-control-bridge-lite-modal-panel { inset: 14px; width: auto; }
+  .seo-control-bridge-lite-modal-fields { grid-template-columns: 1fr; }
 }

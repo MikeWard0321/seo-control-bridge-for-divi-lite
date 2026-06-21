@@ -1,33 +1,33 @@
-.scbd-lite-wrap { max-width: 1040px; }
-.scbd-lite-card { background: #fff; border: 1px solid #dcdcde; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.04); margin: 18px 0; padding: 20px 24px; }
-.scbd-lite-pro-card { border-left: 4px solid #2271b1; }
-.scbd-lite-meta-box { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
-.scbd-lite-meta-box .description { grid-column: 1 / -1; margin: 0 0 4px; }
-.scbd-lite-field { margin: 0; }
-.scbd-lite-field label { display: block; margin-bottom: 6px; }
-.scbd-lite-field input, .scbd-lite-field textarea { box-sizing: border-box; width: 100%; max-width: 100%; border-radius: 10px; }
-.scbd-lite-field-description, .scbd-lite-field-facebook_description, .scbd-lite-field-twitter_description { grid-column: 1 / -1; }
-.scbd-lite-pill { display: inline-block; min-width: 38px; text-align: center; border-radius: 999px; padding: 3px 8px; font-weight: 700; }
-.scbd-lite-pill-0 { background: #f6d7d7; color: #8a2424; }
-.scbd-lite-pill-1, .scbd-lite-pill-2 { background: #fff3cd; color: #7a4d00; }
-.scbd-lite-pill-3 { background: #d1e7dd; color: #0f5132; }
-@media (max-width: 782px) { .scbd-lite-meta-box { grid-template-columns: 1fr; } }
-.scbd-lite-lede { font-size: 15px; max-width: 760px; color: #50575e; }
-.scbd-lite-hero-card { display: flex; align-items: center; justify-content: space-between; gap: 20px; border-left: 4px solid #2271b1; }
-.scbd-lite-hero-card h2 { margin-top: 0; }
-.scbd-lite-hero-card p { max-width: 680px; }
-.scbd-lite-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
-.scbd-lite-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
-.scbd-lite-grid .scbd-lite-card { margin: 0; }
-.scbd-lite-checklist { margin-left: 0; }
-.scbd-lite-checklist li { margin: 8px 0; padding-left: 26px; position: relative; }
-.scbd-lite-checklist li::before { content: "✓"; position: absolute; left: 0; top: 0; color: #0f5132; font-weight: 800; }
+.seo-control-bridge-lite-wrap { max-width: 1040px; }
+.seo-control-bridge-lite-card { background: #fff; border: 1px solid #dcdcde; border-radius: 14px; box-shadow: 0 8px 24px rgba(0,0,0,.04); margin: 18px 0; padding: 20px 24px; }
+.seo-control-bridge-lite-pro-card { border-left: 4px solid #2271b1; }
+.seo-control-bridge-lite-meta-box { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px 20px; }
+.seo-control-bridge-lite-meta-box .description { grid-column: 1 / -1; margin: 0 0 4px; }
+.seo-control-bridge-lite-field { margin: 0; }
+.seo-control-bridge-lite-field label { display: block; margin-bottom: 6px; }
+.seo-control-bridge-lite-field input, .seo-control-bridge-lite-field textarea { box-sizing: border-box; width: 100%; max-width: 100%; border-radius: 10px; }
+.seo-control-bridge-lite-field-description, .seo-control-bridge-lite-field-facebook_description, .seo-control-bridge-lite-field-twitter_description { grid-column: 1 / -1; }
+.seo-control-bridge-lite-pill { display: inline-block; min-width: 38px; text-align: center; border-radius: 999px; padding: 3px 8px; font-weight: 700; }
+.seo-control-bridge-lite-pill-0 { background: #f6d7d7; color: #8a2424; }
+.seo-control-bridge-lite-pill-1, .seo-control-bridge-lite-pill-2 { background: #fff3cd; color: #7a4d00; }
+.seo-control-bridge-lite-pill-3 { background: #d1e7dd; color: #0f5132; }
+@media (max-width: 782px) { .seo-control-bridge-lite-meta-box { grid-template-columns: 1fr; } }
+.seo-control-bridge-lite-lede { font-size: 15px; max-width: 760px; color: #50575e; }
+.seo-control-bridge-lite-hero-card { display: flex; align-items: center; justify-content: space-between; gap: 20px; border-left: 4px solid #2271b1; }
+.seo-control-bridge-lite-hero-card h2 { margin-top: 0; }
+.seo-control-bridge-lite-hero-card p { max-width: 680px; }
+.seo-control-bridge-lite-hero-actions { display: flex; flex-wrap: wrap; gap: 10px; justify-content: flex-end; }
+.seo-control-bridge-lite-grid { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18px; }
+.seo-control-bridge-lite-grid .seo-control-bridge-lite-card { margin: 0; }
+.seo-control-bridge-lite-checklist { margin-left: 0; }
+.seo-control-bridge-lite-checklist li { margin: 8px 0; padding-left: 26px; position: relative; }
+.seo-control-bridge-lite-checklist li::before { content: "✓"; position: absolute; left: 0; top: 0; color: #0f5132; font-weight: 800; }
 @media (max-width: 900px) {
-  .scbd-lite-hero-card { display: block; }
-  .scbd-lite-hero-actions { justify-content: flex-start; }
-  .scbd-lite-grid { grid-template-columns: 1fr; }
+  .seo-control-bridge-lite-hero-card { display: block; }
+  .seo-control-bridge-lite-hero-actions { justify-content: flex-start; }
+  .seo-control-bridge-lite-grid { grid-template-columns: 1fr; }
 }
-.scbd-lite-requirements-ok { border-left: 4px solid #00a32a; }
-.scbd-lite-requirements-warning { border-left: 4px solid #d63638; }
-.scbd-lite-requirements { margin: 12px 0 0; }
-.scbd-lite-requirements li { margin: 6px 0; }
+.seo-control-bridge-lite-requirements-ok { border-left: 4px solid #00a32a; }
+.seo-control-bridge-lite-requirements-warning { border-left: 4px solid #d63638; }
+.seo-control-bridge-lite-requirements { margin: 12px 0 0; }
+.seo-control-bridge-lite-requirements li { margin: 6px 0; }

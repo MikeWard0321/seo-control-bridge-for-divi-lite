@@ -41,7 +41,7 @@
       var frames = document.querySelectorAll('iframe');
       frames.forEach(function (frame) {
         try {
-          frame.contentWindow.postMessage({ type: 'scbd-lite-open' }, window.location.origin);
+          frame.contentWindow.postMessage({ type: 'seo-control-bridge-lite-open' }, window.location.origin);
         } catch (error) {}
       });
     });
@@ -60,15 +60,15 @@
   }
 
   function createLauncher() {
-    launcher = document.querySelector('.scbd-lite-floating-launcher');
+    launcher = document.querySelector('.seo-control-bridge-lite-floating-launcher');
 
     if (!launcher) {
       launcher = document.createElement('button');
       launcher.type = 'button';
-      launcher.className = 'scbd-lite-floating-launcher';
+      launcher.className = 'seo-control-bridge-lite-floating-launcher';
       launcher.textContent = text('button');
       launcher.setAttribute('aria-haspopup', 'dialog');
-      launcher.setAttribute('aria-controls', 'scbd-lite-modal');
+      launcher.setAttribute('aria-controls', 'seo-control-bridge-lite-modal');
       launcher.setAttribute('title', text('button'));
       document.body.appendChild(launcher);
     }
@@ -216,10 +216,10 @@
   }
 
   function bindAdminBarLink(callback) {
-    var adminBarLink = document.querySelector('#wp-admin-bar-scbd-lite a');
+    var adminBarLink = document.querySelector('#wp-admin-bar-seo-control-bridge-lite a');
     if (!adminBarLink) return;
 
-    adminBarLink.setAttribute('href', '#scbd-lite-open');
+    adminBarLink.setAttribute('href', '#seo-control-bridge-lite-open');
     adminBarLink.addEventListener('click', function (event) {
       event.preventDefault();
       event.stopPropagation();
@@ -235,39 +235,39 @@
     if (modal) return;
 
     modal = document.createElement('div');
-    modal.id = 'scbd-lite-modal';
-    modal.className = 'scbd-lite-modal';
+    modal.id = 'seo-control-bridge-lite-modal';
+    modal.className = 'seo-control-bridge-lite-modal';
     modal.setAttribute('role', 'dialog');
     modal.setAttribute('aria-modal', 'true');
-    modal.setAttribute('aria-labelledby', 'scbd-lite-modal-title');
+    modal.setAttribute('aria-labelledby', 'seo-control-bridge-lite-modal-title');
     modal.hidden = true;
 
     modal.innerHTML = '' +
-      '<div class="scbd-lite-modal-backdrop" data-scbd-lite-close></div>' +
-      '<div class="scbd-lite-modal-panel" tabindex="-1">' +
-        '<div class="scbd-lite-modal-header">' +
+      '<div class="seo-control-bridge-lite-modal-backdrop" data-seo-control-bridge-lite-close></div>' +
+      '<div class="seo-control-bridge-lite-modal-panel" tabindex="-1">' +
+        '<div class="seo-control-bridge-lite-modal-header">' +
           '<div>' +
-            '<h2 id="scbd-lite-modal-title">' + escapeHtml(text('title')) + '</h2>' +
+            '<h2 id="seo-control-bridge-lite-modal-title">' + escapeHtml(text('title')) + '</h2>' +
             '<p>' + escapeHtml(text('description')) + '</p>' +
           '</div>' +
-          '<button type="button" class="scbd-lite-modal-close" aria-label="' + escapeHtml(text('close')) + '" data-scbd-lite-close>×</button>' +
+          '<button type="button" class="seo-control-bridge-lite-modal-close" aria-label="' + escapeHtml(text('close')) + '" data-seo-control-bridge-lite-close>×</button>' +
         '</div>' +
-        '<div class="scbd-lite-modal-form">' +
-          '<div class="scbd-lite-modal-fields"><p class="scbd-lite-loading">' + escapeHtml(text('loading')) + '</p></div>' +
-          '<div class="scbd-lite-modal-footer">' +
-            '<span class="scbd-lite-modal-status" aria-live="polite"></span>' +
-            '<button type="button" class="scbd-lite-secondary" data-scbd-lite-close>' + escapeHtml(text('close')) + '</button>' +
-            '<button type="button" class="scbd-lite-primary" data-seo-control-bridge-lite-save>' + escapeHtml(text('save')) + '</button>' +
+        '<div class="seo-control-bridge-lite-modal-form">' +
+          '<div class="seo-control-bridge-lite-modal-fields"><p class="seo-control-bridge-lite-loading">' + escapeHtml(text('loading')) + '</p></div>' +
+          '<div class="seo-control-bridge-lite-modal-footer">' +
+            '<span class="seo-control-bridge-lite-modal-status" aria-live="polite"></span>' +
+            '<button type="button" class="seo-control-bridge-lite-secondary" data-seo-control-bridge-lite-close>' + escapeHtml(text('close')) + '</button>' +
+            '<button type="button" class="seo-control-bridge-lite-primary" data-seo-control-bridge-lite-save>' + escapeHtml(text('save')) + '</button>' +
           '</div>' +
         '</div>' +
       '</div>';
 
     document.body.appendChild(modal);
-    form = modal.querySelector('.scbd-lite-modal-form');
-    status = modal.querySelector('.scbd-lite-modal-status');
+    form = modal.querySelector('.seo-control-bridge-lite-modal-form');
+    status = modal.querySelector('.seo-control-bridge-lite-modal-status');
 
     modal.addEventListener('click', function (event) {
-      if (event.target && event.target.hasAttribute('data-scbd-lite-close')) {
+      if (event.target && event.target.hasAttribute('data-seo-control-bridge-lite-close')) {
         closeModal();
       }
     });
@@ -287,9 +287,9 @@
   function openModal() {
     buildModal();
     modal.hidden = false;
-    document.documentElement.classList.add('scbd-lite-modal-open');
+    document.documentElement.classList.add('seo-control-bridge-lite-modal-open');
 
-    var panel = modal.querySelector('.scbd-lite-modal-panel');
+    var panel = modal.querySelector('.seo-control-bridge-lite-modal-panel');
     if (panel) panel.focus();
 
     if (!loaded) {
@@ -300,7 +300,7 @@
   function closeModal() {
     if (!modal) return;
     modal.hidden = true;
-    document.documentElement.classList.remove('scbd-lite-modal-open');
+    document.documentElement.classList.remove('seo-control-bridge-lite-modal-open');
   }
 
   function loadValues() {
@@ -429,16 +429,16 @@
   }
 
   function renderFields(fields, values) {
-    var wrapper = modal.querySelector('.scbd-lite-modal-fields');
+    var wrapper = modal.querySelector('.seo-control-bridge-lite-modal-fields');
     if (!wrapper) return;
 
     activeFields = fields;
     wrapper.innerHTML = '';
 
     fields.forEach(function (field) {
-      var id = 'scbd_lite_modal_' + field.key;
+      var id = 'seo_control_bridge_lite_modal_' + field.key;
       var row = document.createElement('label');
-      row.className = 'scbd-lite-modal-field scbd-lite-modal-field-' + field.key;
+      row.className = 'seo-control-bridge-lite-modal-field seo-control-bridge-lite-modal-field-' + field.key;
       row.setAttribute('for', id);
 
       var label = document.createElement('span');
@@ -458,12 +458,12 @@
       control.name = field.key;
       control.value = values[field.key] || '';
       control.placeholder = field.placeholder || '';
-      control.setAttribute('data-scbd-lite-key', field.key);
+      control.setAttribute('data-seo-control-bridge-lite-key', field.key);
       row.appendChild(control);
 
       if (field.type === 'textarea') {
         var counter = document.createElement('small');
-        counter.className = 'scbd-lite-modal-counter';
+        counter.className = 'seo-control-bridge-lite-modal-counter';
         row.appendChild(counter);
         updateCounter(control, counter);
         control.addEventListener('input', function () { updateCounter(control, counter); });
@@ -474,15 +474,15 @@
   }
 
   function renderError() {
-    var wrapper = modal.querySelector('.scbd-lite-modal-fields');
+    var wrapper = modal.querySelector('.seo-control-bridge-lite-modal-fields');
     if (!wrapper) return;
-    wrapper.innerHTML = '<p class="scbd-lite-error">' + escapeHtml(text('error')) + '</p>';
+    wrapper.innerHTML = '<p class="seo-control-bridge-lite-error">' + escapeHtml(text('error')) + '</p>';
   }
 
   function collectValues() {
     var values = {};
-    form.querySelectorAll('[data-scbd-lite-key]').forEach(function (field) {
-      values[field.getAttribute('data-scbd-lite-key')] = field.value;
+    form.querySelectorAll('[data-seo-control-bridge-lite-key]').forEach(function (field) {
+      values[field.getAttribute('data-seo-control-bridge-lite-key')] = field.value;
     });
     return values;
   }
@@ -516,7 +516,7 @@
     if (event.origin !== window.location.origin) {
       return;
     }
-    if (event.data && event.data.type === 'scbd-lite-open') {
+    if (event.data && event.data.type === 'seo-control-bridge-lite-open') {
       openModal();
     }
   });
