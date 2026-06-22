@@ -89,7 +89,6 @@ final class Plugin {
         add_action('admin_bar_menu', [$this, 'admin_bar_link'], 90);
         add_filter('plugin_action_links_' . plugin_basename(SEO_CONTROL_BRIDGE_LITE_FILE), [$this, 'plugin_action_links']);
         add_filter('plugin_row_meta', [$this, 'plugin_row_meta'], 10, 2);
-        add_action('admin_enqueue_scripts', [$this, 'plugin_details_assets']);
         add_action('activated_plugin', [$this, 'activation_redirect']);
         add_action('admin_init', [$this, 'maybe_redirect_after_activation']);
         add_filter('manage_post_posts_columns', [$this, 'columns']);
@@ -305,7 +304,7 @@ final class Plugin {
                 </div>
                 <div class="seo-control-bridge-lite-hero-actions">
                     <a class="button button-primary" href="<?php echo esc_url(admin_url('edit.php?post_type=page')); ?>"><?php esc_html_e('Open Pages', 'seo-control-bridge-lite'); ?></a>
-                    <a class="button" href="<?php echo esc_url($this->plugin_details_url()); ?>"><?php esc_html_e('View Details', 'seo-control-bridge-lite'); ?></a>
+                    <a class="button" href="#seo-control-bridge-lite-feature-set"><?php esc_html_e('View Guide', 'seo-control-bridge-lite'); ?></a>
                 </div>
             </div>
 
@@ -338,7 +337,7 @@ final class Plugin {
                 </div>
             </div>
 
-            <div class="seo-control-bridge-lite-card">
+            <div id="seo-control-bridge-lite-feature-set" class="seo-control-bridge-lite-card">
                 <h2><?php esc_html_e('Lite Feature Set', 'seo-control-bridge-lite'); ?></h2>
                 <ul class="seo-control-bridge-lite-checklist">
                     <li><?php esc_html_e('SEO title, meta description, focus keyword, and canonical URL fields.', 'seo-control-bridge-lite'); ?></li>
@@ -383,12 +382,6 @@ final class Plugin {
         return $links;
     }
 
-    public function plugin_details_assets(string $hook): void {
-        if ('plugins.php' === $hook || 'settings_page_seo-control-bridge-lite' === $hook || 'plugin-install.php' === $hook) {
-            add_thickbox();
-        }
-    }
-
     public function activation_redirect(string $plugin): void {
         if (plugin_basename(SEO_CONTROL_BRIDGE_LITE_FILE) === $plugin && !wp_doing_ajax() && is_admin()) {
             set_transient('seo_control_bridge_lite_activation_redirect', '1', 45);
@@ -410,10 +403,6 @@ final class Plugin {
         }
         wp_safe_redirect(admin_url('options-general.php?page=seo-control-bridge-lite'));
         exit;
-    }
-
-    private function plugin_details_url(): string {
-        return self_admin_url('plugin-install.php?tab=plugin-information&plugin=seo-control-bridge-lite&TB_iframe=true&width=772&height=820');
     }
 
     public function add_meta_boxes(): void {

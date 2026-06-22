@@ -5,7 +5,7 @@ Requires at least: 6.5
 Tested up to: 7.0
 Requires PHP: 8.0
 Requires Plugins: seo-by-rank-math
-Stable tag: 1.1.8
+Stable tag: 1.1.9
 License: GPLv2 or later
 License URI: https://www.gnu.org/licenses/gpl-2.0.html
 
@@ -93,6 +93,9 @@ Yes. The settings screen includes a Pro upgrade link for users who need bulk SEO
 4. SEO completion column for pages and posts.
 
 == Changelog ==
+
+= 1.1.9 =
+* Replaced the settings screen View Details button with an internal View Guide link so local and review installs do not open a WordPress.org plugin-information page before directory approval.
 
 = 1.1.8 =
 * Updated internal menu slug, transient, nonce, form, column, script handle, and REST namespace identifiers to use the full seo_control_bridge_lite / seo-control-bridge-lite prefix for WordPress.org review compliance.
