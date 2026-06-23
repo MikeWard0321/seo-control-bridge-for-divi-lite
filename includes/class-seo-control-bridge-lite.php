@@ -376,7 +376,7 @@ final class Plugin {
         // duplicate View Details entries in the plugin description column.
         $links[] = sprintf(
             '<a href="%1$s" target="_blank" rel="noopener noreferrer">%2$s</a>',
-            esc_url('https://github.com/MikeWard0321/seo-control-bridge-lite'),
+            esc_url('https://github.com/MikeWard0321/seo-control-bridge-for-divi-lite'),
             esc_html__('GitHub', 'seo-control-bridge-lite')
         );
         return $links;
